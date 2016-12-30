@@ -1,0 +1,106 @@
+package gamestruct
+
+// RoleBaseInfo : a data struct of role base info
+type RoleBaseInfo struct {
+	uRoleID              uint32   // 当前未使用
+	szRoleName           [32]byte // 角色名
+	bySex                byte     // 性别
+	szAlias              [32]byte // 当前未使用
+	szAccount            [32]byte // 帐号名
+	byLastFaction        byte     // 上次加入门派
+	byCurFaction         byte     // 当前门派
+	byFightMode          byte     // 战斗状态
+	byUseRevive          byte     // 是否使用复活点复活
+	byIsExchanged        byte     // 是否处于跨服状态
+	byPKStatus           byte     // PK状态
+	nAddFactionTimes     int32    // 加入门总次数
+	nSectRole            int32    // 未知含义
+	nGroupCode           int32    // 当前未使用
+	nGroupRole           int32    // 当前未使用
+	nRevivalID           int32    // 重生点地图ID
+	nRevivalX            int32    // 重生点ID
+	nRevivalY            int32    // 0
+	nSubWorldID          int32    // 上次登出地图ID
+	nSubWorldMpsX        int32    // 上次登出地图X坐标
+	nSubWorldMpsY        int32    // 上次登出地图Y坐标
+	szPrimaryKey         [32]byte // 角色唯一标识，MD5
+	nBoxMoney            int32    // 储物箱金钱
+	nBagMoney            int32    // 身上金钱
+	nFiveElement         int32    // 五行
+	nCamp                int32    // 阵营
+	uRoleLevel           uint16   // 角色等级
+	nExpHigh             int16    // 经验高位
+	nExpLow              int32    // 经验低位
+	nLeadLevel           int32    // 统帅力等级
+	nLeadExp             int32    // 统帅力经验
+	nLiveExp             int32    // 当前未使用
+	nStrength            int32    // 力量
+	nDexterity           int32    // 身法
+	nVitality            int32    // 外功
+	nEnergy              int32    // 内功
+	nLuck                int32    // 幸运值
+	nLifeMax             int32    // 最大生命
+	nStaminaMax          int32    // 最大体力
+	nManaMax             int32    // 最大内力
+	nCurLife             int32    // 当前生命
+	nCurStamina          int32    // 当前体力
+	nCurMana             int32    // 当前内力
+	nPKValue             int32    // 当前PK值
+	nLeftPropPoint       int32    // 潜能点
+	nLeftSkillPoint      int32    // 技能点
+	nLeftLife            int32    // 当前未使用
+	nPlayGameTime        int32    // 角色游戏时间
+	nArmorRes            int16    // 当前未使用
+	nWeaponres           int16    // 当前未使用
+	nHeadImage           int16    // 头像编号
+	nSectStat            int32    // 未知含义
+	nWorldStat           int32    // 未知含义
+	nKillPeopleNumber    int32    // 未知含义
+	nBitFlag             int32    // 未知含义
+	uTongID              uint32   // 帮会ID
+	nRepute              int32    // 当前未使用
+	nVotePoint           int32    // 当前未使用
+	uLastLogoutTime      uint32   // 上次登出时间
+	nPhysicsRes          int16    // 当前未使用
+	nColdRes             int16    // 当前未使用
+	nPoisonRes           int16    // 当前未使用
+	nLightingRes         int16    // 当前未使用
+	nFireRes             int16    // 当前未使用
+	nReLiveTime          int16    // 当前未使用
+	byExtBox             byte     // 扩展箱状态：0x01 box1; 0x04 box2; 0x10 box3
+	byBoxPasswordParam   byte     // 储物箱密码参数
+	byReserve13          byte     // 当前未使用
+	byReserve14          byte     // 当前未使用
+	uBoxPassword         uint32   // 储物箱密码
+	uCatchTimeForAntiBot uint32   // 使用外挂被抓时间
+	byRefuseLoginCount   byte     // 已拒绝使用外挂的角色登录的次数
+	byHaveRefuseLogin    byte     // 已拒绝状态中
+	byIsExchangeServer   byte     // 是否处于跨服务器中
+	byRefuseLoginRe2     byte     // 当前未使用
+	nMapCopyIndex        int32    // 当前未使用
+	nRoleCreateTime      uint32   // 角色创建时间
+	byDataTransMark      byte     // 数据转换标记
+	byLastTransLifeLevel byte     // 上次转生等级
+	uReserve72           uint16   // 当前未使用
+	uExBuffOffset        uint32   // 新扩充数据在RoleData的偏移
+	uReserve9            uint32   // 当前未使用
+	uReserve0            uint32   // 当前未使用
+}
+
+// RoleData :
+type RoleData struct {
+	uVersion         uint32       // 角色数据版本
+	sBaseInfo        RoleBaseInfo // 角色基本数据
+	byBaseNeedUpdate byte         // 通知是否需要更新
+	nFightSkillCount int16        // 战斗技能数量
+	nLiveSkillCount  int16        // 生活技能数量
+	nTaskCount       byte         // 任务变量数量
+	nItemCount       int16        // 物品数量
+	nStateCount      int16        // 未知含义
+	dwTaskOffset     uint32       // 任务变量数据偏移
+	dwLSkillOffset   uint32       // 生活技能数据偏移
+	dwFSkillOffset   uint32       // 战斗技能数据偏移
+	dwItemOffset     uint32       // 物品数据偏移
+	dwStateOffset    uint32       // 未知含义
+	dwDataLen        uint32       // 数据长度
+}
