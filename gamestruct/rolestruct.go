@@ -89,20 +89,20 @@ type RoleBaseData struct {
 
 // RoleData : a data struct of role data
 type RoleData struct {
-	Version         uint32       // 角色数据版本
-	BaseData        RoleBaseData // 角色基本数据
-	BaseNeedUpdate  byte         // 通知是否需要更新
-	FightSkillCount int16        // 战斗技能数量
-	LiveSkillCount  int16        // 生活技能数量
-	TaskCount       byte         // 任务变量数量
-	ItemCount       int16        // 物品数量
-	StateCount      int16        // 未知含义
-	TaskOffset      uint32       // 任务变量数据偏移
-	LSkillOffset    uint32       // 生活技能数据偏移
-	FSkillOffset    uint32       // 战斗技能数据偏移
-	ItemOffset      uint32       // 物品数据偏移
-	StateOffset     uint32       // 未知含义
-	DataLen         uint32       // 数据长度
+	Version         uint32 // 角色数据版本
+	RoleBaseData           // 角色基本数据：匿名字段，全部展开
+	BaseNeedUpdate  byte   // 通知是否需要更新
+	FightSkillCount int16  // 战斗技能数量
+	LiveSkillCount  int16  // 生活技能数量
+	TaskCount       byte   // 该字段废弃
+	ItemCount       int16  // 物品数量
+	StateCount      int16  // 未知含义
+	TaskOffset      uint32 // 任务变量数据偏移
+	LSkillOffset    uint32 // 生活技能数据偏移
+	FSkillOffset    uint32 // 战斗技能数据偏移
+	ItemOffset      uint32 // 物品数据偏移
+	StateOffset     uint32 // 未知含义
+	DataLen         uint32 // 数据长度
 }
 
 // SkillData :
@@ -110,4 +110,10 @@ type SkillData struct {
 	SkillID  int16  // 技能ID
 	SkillLv  int16  // 技能等级
 	SkillExp uint32 // 技能经验
+}
+
+// TaskData :
+type TaskData struct {
+	TaskID    int32
+	TaskValue int32
 }
