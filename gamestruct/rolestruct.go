@@ -104,3 +104,10 @@ type RoleData struct {
 	StateOffset     uint32       // 未知含义
 	DataLen         uint32       // 数据长度
 }
+
+// SkillData :
+type SkillData struct {
+	SkillID  int16  // 技能ID
+	SkillLv  int16  // 技能等级
+	SkillExp uint32 // 技能经验
+}
