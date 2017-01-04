@@ -105,15 +105,99 @@ type RoleData struct {
 	DataLen         uint32 // 数据长度
 }
 
-// SkillData :
+// SkillData : a data struct of skill data
 type SkillData struct {
 	SkillID  int16  // 技能ID
 	SkillLv  int16  // 技能等级
 	SkillExp uint32 // 技能经验
 }
 
-// TaskData :
+// TaskData : a data struct of task data
 type TaskData struct {
 	TaskID    int32
 	TaskValue int32
+}
+
+// DataHead : a data struct of data header
+type DataHead struct {
+	DataType  int32 // 数据类型 : 高2字节-数据块大类型，低2字节-数据块小类型
+	DataCount int16 // 此类型数据个数
+	DataLen   int32 // 此数据结构字节数 : DataHead大小 + 此类型数据结构大小 * 此类型数据个数
+}
+
+// ItemDataStd : a data struct of item standard data
+type ItemDataStd struct {
+	ExParam1                  byte   // 物品扩展参数1
+	ExParam2                  byte   // 物品扩展参数2
+	ExParam3                  uint16 // 物品扩展参数3
+	ClassCode                 int32  // 高4位 : 物品品质(Quality)，低4位 : 物品类型(Genre)
+	Place                     int32  // 物品存储空间
+	PosX                      byte   // 物品存储空间X坐标
+	Feature1                  byte   // 换装外观字节1
+	Reserve                   uint16 // 保留字段
+	PosY                      byte   // 物品存储空间Y坐标
+	Feature2                  byte   // 换装外观字节2
+	Feature3                  byte   // 换装外观字节3
+	Feature4                  byte   // 换装外观字节4
+	GenTime                   int32  // 装备生成时间
+	DetailType                int32  // Item(G, D, P)中的D
+	ParticularType            int32  // Item(G, D, P)中的P
+	Level                     byte   // 物品等级
+	BindFlag                  byte   // 绑定标志 : 1-绑定中，0-解除绑定时间高位
+	DeBindTime                uint16 // 解除绑定时间低位（离2000年1月1日的小时数）
+	Series                    int32  // 五行
+	Version                   int32  // 版本
+	RandSeed                  int32  // 随机数种子
+	Param2                    int32  // 物品扩展参数2
+	Param3                    int32  // 物品扩展参数3
+	Param5                    int32  // 物品扩展参数5
+	Param4                    int32  // 物品扩展参数4
+	Param6                    int32  // 物品扩展参数6
+	Param1                    int32  // 物品扩展参数1
+	Lucky                     int32  // 生成时角色的幸运值
+	MaxDurability             int32  // 最大耐久度
+	DurabilityOrLeftUsageTime int32  // 耐久度或剩余使用时间
+}
+
+// ItemDataLockSoul : a data struct of item lock soul data
+type ItemDataLockSoul struct {
+	Owner             [32]byte // 物品归属人
+	State             byte     // 锁魂状态
+	UnLockExpiredTime uint32   // 解魂到期时间
+	ItemGUID          int64    // 物品GUID
+	OwnerGUID         int64    // 归属人GUID
+}
+
+// ItemDataBill : a data struct of item bill data, if player buys item, the item will have this data
+type ItemDataBill struct {
+	ExpiredTime   uint32 //
+	CurrencyType  uint16 //
+	ComeFromPlace uint16 //
+	GoodsPrice    int32  //
+	ItemGUID      int64  // 物品GUID
+}
+
+// ItemDataExtend : a data struct of item extend data
+type ItemDataExtend struct {
+	FusionP         [6]uint16 // 熔炼的纹钢的P
+	FusionMagicSeed [6]int32  // 熔炼的纹钢的魔法属性随机种子
+	CurStarLevel    uint16    // 装备当前星级
+	StarStoneP      [5]uint16 // 镶嵌的星辰石的P
+	StarStoneLevel  [5]uint16 // 装备上对应镶孔的等级
+	CurWishValue    uint16    // 装备当前幸运值
+	LastBreakTime   uint32    // 装备上次突破时间
+	OwnerName       [32]byte  // 装备所有者名字-十万VIP奖励
+	Reserved        [4]byte   // 预留空间
+}
+
+// ItemData :
+type ItemData struct {
+	HasStandard bool             // 是否有标准数据
+	Standard    ItemDataStd      // 标准数据
+	HasLockSoul bool             // 是否有锁魂数据
+	LockSoul    ItemDataLockSoul // 锁魂数据
+	HasBill     bool             // 是否有账单数据
+	Bill        ItemDataBill     // 账单数据
+	HasExtend   bool             // 是否有扩展数据
+	Extend      ItemDataExtend   // 扩展数据
 }

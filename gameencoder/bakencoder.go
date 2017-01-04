@@ -1,8 +1,11 @@
 package gameencoder
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
+	"fmt"
+	"os"
 
 	gmstruct "github.com/heartchord/jxonline/gamestruct"
 )
@@ -32,6 +35,7 @@ type RoleBakEncoder struct {
 	FSkillData []gmstruct.SkillData
 	LSkillData []gmstruct.SkillData
 	TaskData   []gmstruct.TaskData
+	ItemData   []gmstruct.ItemData
 }
 
 // Decode : function to decode original role bak data
@@ -42,23 +46,116 @@ func (en *RoleBakEncoder) Decode(data []byte) bool {
 		return false
 	}
 
+	// 角色基本信息解码
 	if !en.decodeRoleBaseInfo(en.BakData.RoleData, &current) {
 		return false
 	}
 
+	// 角色战斗技能解码
 	if !en.decodeRoleFSkillData(en.BakData.RoleData, &current) {
 		return false
 	}
 
+	// 角色生活技能解码
 	if !en.decodeRoleLSkillData(en.BakData.RoleData, &current) {
 		return false
 	}
 
+	// 角色任务变量解码
 	if !en.decodeRoleTaskData(en.BakData.RoleData, &current) {
 		return false
 	}
 
+	fmt.Printf("current = %d\n", current)
+	if !en.decodeRoleItemData(en.BakData.RoleData, &current) {
+		return false
+	}
 	return true
+}
+
+// PrintAllTaskData : function to print all task data
+func (en RoleBakEncoder) PrintAllTaskData() {
+	count := len(en.TaskData)
+
+	fmt.Println("=================================[TASK VALUE]=================================")
+	fmt.Printf("Total = %d\n", count)
+
+	for i := 0; i < count; i++ {
+		fmt.Printf("Task[ %-4d ] = %-10d", en.TaskData[i].TaskID, en.TaskData[i].TaskValue)
+		if i%2 == 1 {
+			fmt.Println("")
+		}
+		if i%2 == 0 {
+			fmt.Print("\t")
+		}
+	}
+	fmt.Print("\n")
+}
+
+// PrintAllFSkillData : function to print all fight skill data
+func (en RoleBakEncoder) PrintAllFSkillData() {
+	count := len(en.FSkillData)
+
+	fmt.Println("==============================[FIGHT SKILL DATA]==============================")
+	fmt.Printf("Total = %d\n", count)
+
+	for i := 0; i < count; i++ {
+		fmt.Printf("Skill[ %-4d ] = { %-2d, %-10d }", en.FSkillData[i].SkillID, en.FSkillData[i].SkillLv, en.FSkillData[i].SkillExp)
+		if i%2 == 1 {
+			fmt.Println("")
+		}
+		if i%2 == 0 {
+			fmt.Print("\t")
+		}
+	}
+	fmt.Print("\n")
+}
+
+// PrintAllLSkillData : function to print all life skill data
+func (en RoleBakEncoder) PrintAllLSkillData() {
+	count := len(en.LSkillData)
+
+	fmt.Println("==============================[LIFE SKILL DATA]===============================")
+	fmt.Printf("Total = %d\n", count)
+
+	for i := 0; i < count; i++ {
+		fmt.Printf("Skill[ %-4d ] = { %-2d, %-10d }", en.LSkillData[i].SkillID, en.LSkillData[i].SkillLv, en.LSkillData[i].SkillExp)
+		if i%2 == 1 {
+			fmt.Println("")
+		}
+		if i%2 == 0 {
+			fmt.Print("\t")
+		}
+	}
+	fmt.Print("\n")
+}
+
+// PrintAllItemData : function to print all Item data
+func (en RoleBakEncoder) PrintAllItemData() {
+	count := len(en.ItemData)
+
+	fmt.Println("=================================[Item DATA]==================================")
+	fmt.Printf("Total = %d\n", count)
+
+	for i := 0; i < count; i++ {
+		fmt.Printf("Item[ %-3d ] = { G = %d, D = %d, P = %-4d, Lv = %-2d, Place = %-2d }\n", i,
+			en.ItemData[i].Standard.ClassCode&0x0000FFFF, en.ItemData[i].Standard.DetailType, en.ItemData[i].Standard.ParticularType,
+			en.ItemData[i].Standard.Level, en.ItemData[i].Standard.Place)
+
+		if i%20 == 19 {
+			reader := bufio.NewReader(os.Stdin)
+			reader.ReadLine()
+		}
+	}
+
+	fmt.Printf("%d, %d, %d\n", en.ItemData[21].Bill.ExpiredTime, en.ItemData[21].Bill.CurrencyType, en.ItemData[21].Bill.ComeFromPlace)
+	fmt.Print("\n")
+}
+
+// PrintAllSkillData : function to print all skill data
+func (en RoleBakEncoder) PrintAllSkillData() {
+	en.PrintAllFSkillData()
+	en.PrintAllLSkillData()
 }
 
 func (en *RoleBakEncoder) decodeBakHeader(data []byte) bool {
@@ -236,6 +333,83 @@ func (en *RoleBakEncoder) decodeRoleTaskData(data []byte, current *uint32) bool 
 	}
 
 	*current += len
+	return true
+}
+
+func (en *RoleBakEncoder) decodeRoleItemData(data []byte, current *uint32) bool {
+	dataTmp := data[*current:]
+	counter := int16(0)
+	var header gmstruct.DataHead
+
+	// 角色身上没有物品，不解析
+	if en.RoleData.ItemCount <= 0 {
+		return true
+	}
+	en.ItemData = make([]gmstruct.ItemData, en.RoleData.ItemCount)
+
+	end := uint32(0)
+	start := uint32(0)
+	structLen := uint32(0)
+
+	for counter < en.RoleData.ItemCount {
+		// 解析DataHead
+		structLen = uint32(binary.Size(header))
+		end = start + structLen
+		buf := bytes.NewBuffer(dataTmp[start:end])
+		binary.Read(buf, binary.LittleEndian, &header)
+		start += structLen
+		*current += structLen
+
+		fmt.Printf("ItemCount = %d\n", en.RoleData.ItemCount)
+		fmt.Printf("DataType = %d\n", header.DataType)
+		fmt.Printf("DataCount = %d\n", header.DataCount)
+
+		for i := int16(0); i < header.DataCount; i++ {
+			en.ItemData[counter].HasStandard = (header.DataType&0xffff)&1 != 0
+			en.ItemData[counter].HasLockSoul = (header.DataType&0xffff)&2 != 0
+			en.ItemData[counter].HasBill = (header.DataType&0xffff)&4 != 0
+			en.ItemData[counter].HasExtend = (header.DataType&0xffff)&8 != 0
+
+			if en.ItemData[counter].HasStandard {
+				structLen = uint32(binary.Size(en.ItemData[counter].Standard))
+				end = start + structLen
+				buf = bytes.NewBuffer(dataTmp[start:end])
+				binary.Read(buf, binary.LittleEndian, &en.ItemData[counter].Standard)
+				start += structLen
+				*current += structLen
+			}
+
+			if en.ItemData[counter].HasLockSoul {
+				structLen = uint32(binary.Size(en.ItemData[counter].LockSoul))
+				end = start + structLen
+				buf = bytes.NewBuffer(dataTmp[start:end])
+				binary.Read(buf, binary.LittleEndian, &en.ItemData[counter].LockSoul)
+				start += structLen
+				*current += structLen
+			}
+
+			if en.ItemData[counter].HasBill {
+				structLen = uint32(binary.Size(en.ItemData[counter].Bill))
+				end = start + structLen
+				buf = bytes.NewBuffer(dataTmp[start:end])
+				binary.Read(buf, binary.LittleEndian, &en.ItemData[counter].Bill)
+				start += structLen
+				*current += structLen
+			}
+
+			if en.ItemData[counter].HasExtend {
+				structLen = uint32(binary.Size(en.ItemData[counter].Extend))
+				end = start + structLen
+				buf = bytes.NewBuffer(dataTmp[start:end])
+				binary.Read(buf, binary.LittleEndian, &en.ItemData[counter].Extend)
+				start += structLen
+				*current += structLen
+			}
+
+			counter++
+		}
+	}
+
 	return true
 }
 
