@@ -69,8 +69,8 @@ type RoleBaseData struct {
 	ReLiveTime          int16    // 当前未使用
 	ExtBox              byte     // 扩展箱状态：0x01 box1; 0x04 box2; 0x10 box3
 	BoxPasswordParam    byte     // 储物箱密码参数
-	Reserve13           byte     // 当前未使用
-	Reserve14           byte     // 当前未使用
+	Reserved13          byte     // 当前未使用
+	Reserved14          byte     // 当前未使用
 	BoxPassword         uint32   // 储物箱密码
 	CatchTimeForAntiBot uint32   // 使用外挂被抓时间
 	RefuseLoginCount    byte     // 已拒绝使用外挂的角色登录的次数
@@ -81,10 +81,10 @@ type RoleBaseData struct {
 	RoleCreateTime      uint32   // 角色创建时间
 	DataTransMark       byte     // 数据转换标记
 	LastTransLifeLevel  byte     // 上次转生等级
-	Reserve72           uint16   // 当前未使用
+	Reserved72          uint16   // 当前未使用
 	ExBuffOffset        uint32   // 新扩充数据在RoleData的偏移
-	Reserve9            uint32   // 当前未使用
-	Reserve0            uint32   // 当前未使用
+	Reserved9           uint32   // 当前未使用
+	Reserved0           uint32   // 当前未使用
 }
 
 // RoleData : a data struct of role data
@@ -134,7 +134,7 @@ type ItemDataStd struct {
 	Place                     int32  // 物品存储空间
 	PosX                      byte   // 物品存储空间X坐标
 	Feature1                  byte   // 换装外观字节1
-	Reserve                   uint16 // 保留字段
+	Reserved                  uint16 // 保留字段
 	PosY                      byte   // 物品存储空间Y坐标
 	Feature2                  byte   // 换装外观字节2
 	Feature3                  byte   // 换装外观字节3
@@ -190,7 +190,7 @@ type ItemDataExtend struct {
 	Reserved        [4]byte   // 预留空间
 }
 
-// ItemData :
+// ItemData : a data struct of item data
 type ItemData struct {
 	HasStandard bool             // 是否有标准数据
 	Standard    ItemDataStd      // 标准数据
@@ -200,4 +200,122 @@ type ItemData struct {
 	Bill        ItemDataBill     // 账单数据
 	HasExtend   bool             // 是否有扩展数据
 	Extend      ItemDataExtend   // 扩展数据
+}
+
+// enum state type
+const (
+	NoneStateType = iota
+	SkillStateType
+	SkillCDType
+	FeatureInfoType
+	PlayerEventInfoType
+	PlayerTitleType
+	PlayerMaxSkillLevelType
+	CustomStructType
+)
+
+// SkillState :
+type SkillState struct {
+	StateSkillID   int32
+	StateType      int32
+	StateLevel     int32
+	Time           uint32
+	NoClearOnDeath byte
+	Reserved2      byte
+	Reserved3      byte
+	Reserved4      byte
+}
+
+// Partner :
+type Partner struct {
+	TemplateID int32
+	Series     byte
+	Level      byte
+	CurLife    int32
+	MapX       int32
+	MapY       int32
+}
+
+// FeatureInfo :
+type FeatureInfo struct {
+	FeaturePriority   byte
+	FeatureState      byte
+	AvailableTimeType byte
+	AvailableTime     uint32
+	NpcSettingIdx     uint32
+	HelmType          uint16
+	ArmorType         uint16
+	WeaponType        uint16
+	HorseType         uint16
+}
+
+// PlayerEventData :
+type PlayerEventData struct {
+	Data uint16
+	ID   uint16
+}
+
+// PlayerEvent :
+type PlayerEvent struct {
+	EventCount uint16
+	Reserved   uint16
+	EventData  [7]PlayerEventData
+}
+
+// TitleTime :
+type TitleTime struct {
+	Type     int32
+	Time     int32
+	TrueTime int32
+}
+
+// PlayerTitle :
+type PlayerTitle struct {
+	Time          TitleTime
+	TitleID       uint32
+	ActiveTitleID byte
+}
+
+// MaxSkillLevelInfoItem :
+type MaxSkillLevelInfoItem struct {
+	SkillID       uint16
+	SkillMaxLevel byte
+	Reserved      byte
+}
+
+// MaxSkillLevelInfo :
+type MaxSkillLevelInfo struct {
+	Data [7]MaxSkillLevelInfoItem
+}
+
+// enum custom struct type
+const (
+	CustomStructPlayerPartner = iota
+	CustomStructTypeTotal
+)
+
+// CustomStructHeader :
+type CustomStructHeader struct {
+	Type     byte
+	Size     uint32
+	Reserved [11]byte
+}
+
+// SkillCDData :
+type SkillCDData struct {
+	SkillID     int32
+	DelaytFrame int32
+}
+
+// SkillCD :
+type SkillCD struct {
+	LastTime int32
+	Data     [3]SkillCDData
+	Reserved int32
+}
+
+// StateData :
+type StateData struct {
+	Type byte
+	Data [32]byte
 }

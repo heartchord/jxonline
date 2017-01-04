@@ -30,12 +30,18 @@ type RoleBakData struct {
 
 // RoleBakEncoder : a data struct of role bak encoder and decoder
 type RoleBakEncoder struct {
-	BakData    RoleBakData
-	RoleData   gmstruct.RoleData
-	FSkillData []gmstruct.SkillData
-	LSkillData []gmstruct.SkillData
-	TaskData   []gmstruct.TaskData
-	ItemData   []gmstruct.ItemData
+	BakData            RoleBakData
+	RoleData           gmstruct.RoleData
+	FSkillData         []gmstruct.SkillData
+	LSkillData         []gmstruct.SkillData
+	TaskData           []gmstruct.TaskData
+	ItemData           []gmstruct.ItemData
+	SkillState         []gmstruct.SkillState
+	SkillCD            []gmstruct.SkillCD
+	FeatureInfo        []gmstruct.FeatureInfo
+	PlayerEvent        []gmstruct.PlayerEvent
+	PlayerTitle        []gmstruct.PlayerTitle
+	CustomStructHeader []gmstruct.CustomStructHeader
 }
 
 // Decode : function to decode original role bak data
@@ -51,15 +57,24 @@ func (en *RoleBakEncoder) Decode(data []byte) bool {
 		return false
 	}
 
+	fmt.Printf("current = %d\n", current)
+	fmt.Printf("FSkillOffset = %d\n", en.RoleData.FSkillOffset)
+
 	// 角色战斗技能解码
 	if !en.decodeRoleFSkillData(en.BakData.RoleData, &current) {
 		return false
 	}
 
+	fmt.Printf("current = %d\n", current)
+	fmt.Printf("LSkillOffset = %d\n", en.RoleData.LSkillOffset)
+
 	// 角色生活技能解码
 	if !en.decodeRoleLSkillData(en.BakData.RoleData, &current) {
 		return false
 	}
+
+	fmt.Printf("current = %d\n", current)
+	fmt.Printf("TaskOffset = %d\n", en.RoleData.TaskOffset)
 
 	// 角色任务变量解码
 	if !en.decodeRoleTaskData(en.BakData.RoleData, &current) {
@@ -67,9 +82,22 @@ func (en *RoleBakEncoder) Decode(data []byte) bool {
 	}
 
 	fmt.Printf("current = %d\n", current)
+	fmt.Printf("ItemOffset = %d\n", en.RoleData.ItemOffset)
+
+	// 角色装备道具解码
 	if !en.decodeRoleItemData(en.BakData.RoleData, &current) {
 		return false
 	}
+
+	fmt.Printf("current = %d\n", current)
+	fmt.Printf("StateOffset = %d\n", en.RoleData.StateOffset)
+
+	if !en.decodeRoleStateList(en.BakData.RoleData, &current) {
+		return false
+	}
+
+	fmt.Printf("current = %d\n", current)
+	fmt.Printf("ExBuffOffset = %d\n", en.RoleData.ExBuffOffset)
 	return true
 }
 
@@ -360,9 +388,9 @@ func (en *RoleBakEncoder) decodeRoleItemData(data []byte, current *uint32) bool 
 		start += structLen
 		*current += structLen
 
-		fmt.Printf("ItemCount = %d\n", en.RoleData.ItemCount)
-		fmt.Printf("DataType = %d\n", header.DataType)
-		fmt.Printf("DataCount = %d\n", header.DataCount)
+		//fmt.Printf("ItemCount = %d\n", en.RoleData.ItemCount)
+		//fmt.Printf("DataType = %d\n", header.DataType)
+		//fmt.Printf("DataCount = %d\n", header.DataCount)
 
 		for i := int16(0); i < header.DataCount; i++ {
 			en.ItemData[counter].HasStandard = (header.DataType&0xffff)&1 != 0
@@ -410,6 +438,120 @@ func (en *RoleBakEncoder) decodeRoleItemData(data []byte, current *uint32) bool 
 		}
 	}
 
+	return true
+}
+
+func (en *RoleBakEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
+	dataTmp := data[*current:]
+	var stateData gmstruct.StateData
+
+	// 角色身上没有状态信息，不解析
+	if en.RoleData.StateCount <= 0 {
+		return true
+	}
+
+	//fmt.Printf("StateCount = %d\n", en.RoleData.StateCount)
+
+	end := uint32(0)
+	start := uint32(0)
+	structLen := uint32(0)
+
+	for i := int16(0); i < en.RoleData.StateCount; i++ {
+		// 解码StateData
+		stateDataLen := uint32(binary.Size(stateData))
+		end = start + stateDataLen
+		buf := bytes.NewBuffer(dataTmp[start:end])
+		binary.Read(buf, binary.LittleEndian, &stateData)
+
+		// 根据类型进行解码
+		switch stateData.Type {
+		case gmstruct.SkillStateType:
+			{
+				var state gmstruct.SkillState
+				structLen = uint32(binary.Size(state))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &state)
+				en.SkillState = append(en.SkillState, state)
+
+				start += stateDataLen
+				*current += stateDataLen
+			}
+		case gmstruct.SkillCDType:
+			{
+				var cd gmstruct.SkillCD
+				structLen = uint32(binary.Size(cd))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &cd)
+				en.SkillCD = append(en.SkillCD, cd)
+
+				start += stateDataLen
+				*current += stateDataLen
+			}
+		case gmstruct.FeatureInfoType:
+			{
+				var info gmstruct.FeatureInfo
+				structLen = uint32(binary.Size(info))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &info)
+				en.FeatureInfo = append(en.FeatureInfo, info)
+
+				start += stateDataLen
+				*current += stateDataLen
+			}
+		case gmstruct.PlayerEventInfoType:
+			{
+				var event gmstruct.PlayerEvent
+				structLen = uint32(binary.Size(event))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &event)
+				en.PlayerEvent = append(en.PlayerEvent, event)
+
+				start += stateDataLen
+				*current += stateDataLen
+			}
+		case gmstruct.PlayerTitleType:
+			{
+				var title gmstruct.PlayerTitle
+				structLen = uint32(binary.Size(title))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &title)
+				en.PlayerTitle = append(en.PlayerTitle, title)
+
+				start += stateDataLen
+				*current += stateDataLen
+			}
+		case gmstruct.CustomStructType:
+			{ // 用户自定义数据头，真正数据在数据头之后
+				// 用户自定义数据可能比gmstruct.CustomStructHeader.Data小
+				// 如果用户数据太短，这里会发生问题
+				var custom gmstruct.CustomStructHeader
+				structLen = uint32(binary.Size(custom))
+				buf := bytes.NewBuffer(stateData.Data[0:structLen])
+				binary.Read(buf, binary.LittleEndian, &custom)
+				en.CustomStructHeader = append(en.CustomStructHeader, custom)
+
+				// 处理用户自定义数据体
+				switch custom.Type {
+				case gmstruct.CustomStructPlayerPartner:
+					{
+					}
+				}
+
+				// 跳过用户自定义数据体
+				start += custom.Size + 1
+				*current += custom.Size + 1
+			}
+		default:
+			{
+				fmt.Printf("DecodeRoleStateList : unexpected type - %d!\n", stateData.Type)
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (en *RoleBakEncoder) decodeCustomStructData(data []byte) bool {
 	return true
 }
 
