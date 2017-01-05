@@ -1,5 +1,7 @@
 package gamestruct
 
+import "fmt"
+
 // RoleBaseData : a data struct of role base info
 type RoleBaseData struct {
 	RoleID              uint32   // 当前未使用
@@ -82,7 +84,7 @@ type RoleBaseData struct {
 	DataTransMark       byte     // 数据转换标记
 	LastTransLifeLevel  byte     // 上次转生等级
 	Reserved72          uint16   // 当前未使用
-	ExBuffOffset        uint32   // 新扩充数据在RoleData的偏移
+	ExtBuffOffset       uint32   // 新扩充数据在RoleData的偏移
 	Reserved9           uint32   // 当前未使用
 	Reserved0           uint32   // 当前未使用
 }
@@ -318,4 +320,76 @@ type SkillCD struct {
 type StateData struct {
 	Type byte
 	Data [32]byte
+}
+
+// RoleExtDataOfBase ：
+type RoleExtDataOfBase struct {
+	RoleNameGUID        int64  // 角色GUID
+	Password            uint32 // 绑定或锁魂操作的密码（两者共一个密码）
+	PasswordExpiredTime uint32 // 绑定或锁魂操作解除密码日期
+	PasswordTimeOrTimes uint32 // 输入密码错误次数或密码错误解禁日期
+	HavePassword        byte   // 绑定或锁魂是否设置了密码
+}
+
+// RoleExtDataOfLingLongLockParam ;
+type RoleExtDataOfLingLongLockParam struct {
+	CardHash uint32 // 网卡硬件地址哈希码
+	DiskHash uint32 // 硬盘序列号哈希码
+}
+
+// RoleExtDataOfLingLongLock :
+type RoleExtDataOfLingLongLock struct {
+	RoleExtDataOfLingLongLockParam
+	Password uint32 // 玲珑锁密码
+	Timeout  uint32 // 到期时间，非0表示玲珑锁有效
+	Locked   byte   // 是否锁定（跨服时此状态保持不变，登录时重新设置）
+}
+
+// RoleExtDataOfHangerOnData :
+type RoleExtDataOfHangerOnData struct {
+	CurTaskType     byte  // 门客当前任务类型
+	CurTaskNum      byte  // 门客当前任务数量
+	CurTaskRestTime int32 // 门客当前任务剩余时间(游戏逻辑帧数,0表示任务完成可领奖,-1表示当前无任务)
+	ExpiredTime     int32
+}
+
+// RoleExtDataOfHangerOn :
+type RoleExtDataOfHangerOn struct {
+	PermanentHangerOn RoleExtDataOfHangerOnData     // 永久门客
+	TemporaryHangerOn [10]RoleExtDataOfHangerOnData // 临时门客
+}
+
+// RoleExtDataOfTransNimbus :
+type RoleExtDataOfTransNimbus struct {
+	TransNimbusExpHigh int16 // 转灵经验(高位)
+	TransNimbusExpLow  int32 // 转灵经验(低位)
+}
+
+// RoleExtDataOfBreak ：
+type RoleExtDataOfBreak struct {
+	HasBreak byte // 200突破，0表示没突破
+}
+
+// RoleExtDataOfEquipCompose ：
+type RoleExtDataOfEquipCompose struct {
+	ComposeLv    uint32 // 合成等级
+	ComposeExp   uint32 // 合成经验
+	DecomposeLv  uint32 // 分解等级
+	DecomposeExp uint32 // 分解经验
+}
+
+// RoleExtData :
+type RoleExtData struct {
+	Base         RoleExtDataOfBase
+	LingLongLock RoleExtDataOfLingLongLock
+	HangerOn     RoleExtDataOfHangerOn
+	TransNimbus  RoleExtDataOfTransNimbus
+	Break        RoleExtDataOfBreak
+	EquipCompose RoleExtDataOfEquipCompose
+}
+
+func (r RoleExtData) PrintEquipComposeData() {
+	fmt.Println("===============================[EQUIP COMPOSE]================================")
+	fmt.Printf("Compose Level : %d\t Decompose Level : %d\n", r.EquipCompose.ComposeLv, r.EquipCompose.DecomposeLv)
+	fmt.Printf("Compose exp   : %d\t Decompose exp   : %d\n", r.EquipCompose.ComposeExp, r.EquipCompose.DecomposeExp)
 }
