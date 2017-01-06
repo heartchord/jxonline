@@ -27,20 +27,22 @@ type playerExtDataReader func(data []byte, current *uint32) bool
 
 // RoleEncoder : a data struct of role bak encoder and decoder
 type RoleEncoder struct {
-	BakData            RoleBakData
-	RoleData           gmstruct.RoleData
-	FSkillData         []gmstruct.SkillData
-	LSkillData         []gmstruct.SkillData
-	TaskData           []gmstruct.TaskData
-	ItemData           []gmstruct.ItemData
-	SkillState         []gmstruct.SkillState
-	SkillCD            []gmstruct.SkillCD
-	FeatureInfo        []gmstruct.FeatureInfo
-	PlayerEvent        []gmstruct.PlayerEvent
-	PlayerTitle        []gmstruct.PlayerTitle
-	CustomStructHeader []gmstruct.CustomStructHeader
-	RoleExtData        gmstruct.RoleExtData
-	extDataReader      map[int32]playerExtDataReader
+	RoleBaseData       gmstruct.RoleBaseData       // 角色基础数据
+	FSkillData         []gmstruct.SkillData        // 战斗技能数据
+	LSkillData         []gmstruct.SkillData        // 生活技能数据
+	TaskData           []gmstruct.TaskData         // 任务变量数据
+	ItemData           []gmstruct.ItemData         // 装备物品数据
+	SkillState         []gmstruct.SkillState       // 技能状态数据
+	SkillCD            []gmstruct.SkillCD          // 技能冷却数据
+	FeatureInfo        []gmstruct.FeatureInfo      // 角色外观数据
+	PlayerEvent        []gmstruct.PlayerEvent      // 角色事件数据
+	PlayerTitle        []gmstruct.RoleTitle        // 角色称号数据
+	CustomStructHeader []gmstruct.CustomDataHeader // 自定义数据头
+	RoleExtData        gmstruct.RoleExtData        // 角色扩展数据
+	CRC32Cal           uint32                      // 根据角色原始数据计算的CRC32码
+	CRC32Read          uint32                      // 从角色原始数据末尾读的CRC32码
+
+	extDataReader map[int32]playerExtDataReader // 角色扩展数据解析函数
 }
 
 // Init : 123
@@ -62,52 +64,56 @@ func (en *RoleEncoder) Init() bool {
 func (en *RoleEncoder) Decode(data []byte) bool {
 	current := uint32(0)
 
+	// 计算CRC32
+	dataLen := len(data)
+	en.CRC32Cal = CRC32(0, data[:dataLen-4])
+
 	// 角色基本信息解码
 	if !en.decodeRoleBaseInfo(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, SkillOffset   = %-4d\n", current, en.RoleData.FSkillOffset)
+	fmt.Printf("CurrentPos = %-4d, SkillOffset   = %-4d\n", current, en.RoleBaseData.FSkillOffset)
 
 	// 角色战斗技能解码
 	if !en.decodeRoleFSkillData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, LSkillOffset  = %-4d\n", current, en.RoleData.LSkillOffset)
+	fmt.Printf("CurrentPos = %-4d, LSkillOffset  = %-4d\n", current, en.RoleBaseData.LSkillOffset)
 
 	// 角色生活技能解码
 	if !en.decodeRoleLSkillData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, TaskOffset    = %-4d\n", current, en.RoleData.TaskOffset)
+	fmt.Printf("CurrentPos = %-4d, TaskOffset    = %-4d\n", current, en.RoleBaseData.TaskOffset)
 
 	// 角色任务变量解码
 	if !en.decodeRoleTaskData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, ItemOffset    = %-4d\n", current, en.RoleData.ItemOffset)
+	fmt.Printf("CurrentPos = %-4d, ItemOffset    = %-4d\n", current, en.RoleBaseData.ItemOffset)
 
 	// 角色装备道具解码
 	if !en.decodeRoleItemData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, StateOffset   = %-4d\n", current, en.RoleData.StateOffset)
+	fmt.Printf("CurrentPos = %-4d, StateOffset   = %-4d\n", current, en.RoleBaseData.StateOffset)
 
 	if !en.decodeRoleStateList(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, ExtBuffOffset = %-4d\n", current, en.RoleData.ExtBuffOffset)
+	fmt.Printf("CurrentPos = %-4d, ExtBuffOffset = %-4d\n", current, en.RoleBaseData.ExtBuffOffset)
 
 	if !en.decodeRoleExtData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, RoleDataLen   = %-4d\n", current, en.RoleData.DataLen)
+	fmt.Printf("CurrentPos = %-4d, RoleDataLen   = %-4d\n", current, en.RoleBaseData.DataLen)
 
 	return true
 }
@@ -197,7 +203,7 @@ func (en RoleEncoder) PrintAllSkillData() {
 func (en *RoleEncoder) decodeRoleBaseInfo(data []byte, current *uint32) bool {
 
 	dataLen := uint32(len(data))
-	structLen := uint32(binary.Size(en.RoleData))
+	structLen := uint32(binary.Size(en.RoleBaseData))
 
 	start := *current
 	if start+structLen > dataLen { // 数据长度 < 角色名数据头长度
@@ -209,7 +215,7 @@ func (en *RoleEncoder) decodeRoleBaseInfo(data []byte, current *uint32) bool {
 
 	end := *current + structLen
 	buf := bytes.NewBuffer(data[start:end])
-	binary.Read(buf, binary.LittleEndian, &en.RoleData)
+	binary.Read(buf, binary.LittleEndian, &en.RoleBaseData)
 
 	*current += structLen
 	return true
@@ -315,10 +321,10 @@ func (en *RoleEncoder) decodeRoleTaskData(data []byte, current *uint32) bool {
 
 func (en *RoleEncoder) decodeRoleItemData(data []byte, current *uint32) bool {
 
-	if en.RoleData.ItemCount <= 0 { // 角色身上没有物品，不解析
+	if en.RoleBaseData.ItemCount <= 0 { // 角色身上没有物品，不解析
 		return true
 	}
-	en.ItemData = make([]gmstruct.ItemData, en.RoleData.ItemCount)
+	en.ItemData = make([]gmstruct.ItemData, en.RoleBaseData.ItemCount)
 
 	end := *current
 	start := *current
@@ -326,7 +332,7 @@ func (en *RoleEncoder) decodeRoleItemData(data []byte, current *uint32) bool {
 	structLen := uint32(0)
 
 	var header gmstruct.DataHead
-	for counter < en.RoleData.ItemCount {
+	for counter < en.RoleBaseData.ItemCount {
 		// 解析DataHead
 		structLen = uint32(binary.Size(header))
 		end = start + structLen
@@ -386,7 +392,7 @@ func (en *RoleEncoder) decodeRoleItemData(data []byte, current *uint32) bool {
 
 func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 	// 角色身上没有状态信息，不解析
-	if en.RoleData.StateCount <= 0 {
+	if en.RoleBaseData.StateCount <= 0 {
 		return true
 	}
 
@@ -394,7 +400,7 @@ func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 	var end uint32
 	var start = *current
 
-	for i := int16(0); i < en.RoleData.StateCount; i++ {
+	for i := int16(0); i < en.RoleBaseData.StateCount; i++ {
 		// 解码StateData
 		stateDataLen := uint32(binary.Size(stateData))
 		end = start + stateDataLen
@@ -449,7 +455,7 @@ func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 			}
 		case gmstruct.PlayerTitleType:
 			{
-				var title gmstruct.PlayerTitle
+				var title gmstruct.RoleTitle
 				structLen := uint32(binary.Size(title))
 				buf := bytes.NewBuffer(stateData.Data[0:structLen])
 				binary.Read(buf, binary.LittleEndian, &title)
@@ -462,7 +468,7 @@ func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 			{ // 用户自定义数据头，真正数据在数据头之后
 				// 用户自定义数据可能比gmstruct.CustomStructHeader.Data小
 				// 如果用户数据太短，这里会发生问题
-				var custom gmstruct.CustomStructHeader
+				var custom gmstruct.CustomDataHeader
 				structLen := uint32(binary.Size(custom))
 				buf := bytes.NewBuffer(stateData.Data[0:structLen])
 				binary.Read(buf, binary.LittleEndian, &custom)
@@ -470,14 +476,15 @@ func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 
 				// 处理用户自定义数据体
 				switch custom.Type {
-				case gmstruct.CustomStructPlayerPartner:
+				case gmstruct.CustomDataTypeOfPartner:
 					{
+						en.decodeCustomDataOfPartner(data[start+1 : start+1+custom.Size])
 					}
 				}
 
 				// 跳过用户自定义数据体
-				start += custom.Size + 1
-				*current += custom.Size + 1
+				start += custom.Size + 1    // 用户自定义数据体长度 + gmstruct.CustomDataHeader.Type
+				*current += custom.Size + 1 // 用户自定义数据体长度 + gmstruct.CustomDataHeader.Type
 			}
 		default:
 			{
@@ -489,16 +496,39 @@ func (en *RoleEncoder) decodeRoleStateList(data []byte, current *uint32) bool {
 	return true
 }
 
-func (en *RoleEncoder) decodeCustomStructData(data []byte) bool {
+func (en *RoleEncoder) decodeCustomDataOfPartner(data []byte) bool {
+	var header gmstruct.CustomDataOfPartnerHeader
+
+	start := uint32(0)
+	structLen := uint32(binary.Size(header))
+	end := start + structLen
+	dataLen := uint32(len(data))
+
+	if dataLen < structLen {
+		return false
+	}
+
+	buf := bytes.NewBuffer(data[start:end])
+	binary.Read(buf, binary.LittleEndian, &header)
+	start += structLen
+
+	if header.PartnerCount <= 0 {
+		return true
+	}
+
+	for i := byte(0); i < header.PartnerCount; i++ {
+		// 解析同伴数据，由于目前没有同伴数据，这里暂时不解析了
+	}
+
 	return true
 }
 
 func (en *RoleEncoder) decodeRoleExtData(data []byte, current *uint32) bool {
 	var header gmstruct.DataHead
 
-	if *current != en.RoleData.ExtBuffOffset && en.RoleData.ExtBuffOffset > 0 {
+	if *current != en.RoleBaseData.ExtBuffOffset && en.RoleBaseData.ExtBuffOffset > 0 {
 		// 如果偏移出错，使用ExtBuffOffset修正
-		*current = en.RoleData.ExtBuffOffset
+		*current = en.RoleBaseData.ExtBuffOffset
 	}
 
 	dataLen := uint32(len(data))
@@ -641,31 +671,31 @@ func (en *RoleEncoder) decodeRoleExtDataOfEquipCompose(data []byte, current *uin
 }
 
 func (en *RoleEncoder) getFSkillCount() (bool, uint32) {
-	if en.RoleData.LSkillOffset < en.RoleData.FSkillOffset {
+	if en.RoleBaseData.LSkillOffset < en.RoleBaseData.FSkillOffset {
 		return false, 0
 	}
 
 	var skill gmstruct.SkillData
 	skillDataSize := uint32(binary.Size(skill))
-	return true, (en.RoleData.LSkillOffset - en.RoleData.FSkillOffset) / skillDataSize
+	return true, (en.RoleBaseData.LSkillOffset - en.RoleBaseData.FSkillOffset) / skillDataSize
 }
 
 func (en *RoleEncoder) getLSkillCount() (bool, uint32) {
-	if en.RoleData.TaskOffset < en.RoleData.LSkillOffset {
+	if en.RoleBaseData.TaskOffset < en.RoleBaseData.LSkillOffset {
 		return false, 0
 	}
 
 	var skill gmstruct.SkillData
 	skillDataSize := uint32(binary.Size(skill))
-	return true, (en.RoleData.TaskOffset - en.RoleData.LSkillOffset) / skillDataSize
+	return true, (en.RoleBaseData.TaskOffset - en.RoleBaseData.LSkillOffset) / skillDataSize
 }
 
 func (en *RoleEncoder) getTaskCount() (bool, uint32) {
-	if en.RoleData.ItemOffset < en.RoleData.TaskOffset {
+	if en.RoleBaseData.ItemOffset < en.RoleBaseData.TaskOffset {
 		return false, 0
 	}
 
 	var task gmstruct.TaskData
 	taskDataSize := uint32(binary.Size(task))
-	return true, (en.RoleData.ItemOffset - en.RoleData.TaskOffset) / taskDataSize
+	return true, (en.RoleBaseData.ItemOffset - en.RoleBaseData.TaskOffset) / taskDataSize
 }

@@ -2,8 +2,8 @@ package gamestruct
 
 import "fmt"
 
-// RoleBaseData : a data struct of role base info
-type RoleBaseData struct {
+// RoleBaseInfo : 角色基础数据中的基础信息部分，包含角色最基本的属性状态
+type RoleBaseInfo struct {
 	RoleID              uint32   // 当前未使用
 	RoleName            [32]byte // 角色名
 	Sex                 byte     // 性别
@@ -89,10 +89,10 @@ type RoleBaseData struct {
 	Reserved0           uint32   // 当前未使用
 }
 
-// RoleData : a data struct of role data
-type RoleData struct {
+// RoleBaseData : 角色基础数据，包含RoleBaseInfo和其他数据区块的偏移信息
+type RoleBaseData struct {
 	Version         uint32 // 角色数据版本
-	RoleBaseData           // 角色基本数据：匿名字段，全部展开
+	RoleBaseInfo           // 角色基本数据：匿名字段，全部展开
 	BaseNeedUpdate  byte   // 通知是否需要更新
 	FightSkillCount int16  // 战斗技能数量
 	LiveSkillCount  int16  // 生活技能数量
@@ -264,18 +264,26 @@ type PlayerEvent struct {
 	EventData  [7]PlayerEventData
 }
 
-// TitleTime :
-type TitleTime struct {
-	Type     int32
-	Time     int32
-	TrueTime int32
+// 角色称号类型
+const (
+	RoleTitleTypeOfNormal   = iota // 普通称号，存档不记录
+	RoleTitleTypeOfGameTime        // 游戏帧数称号，称号存在截止时间以玩家实际游戏时间为准，存档
+	RoleTitleTypeOfTrueTime        // 实际时间称号，称号存在存在截止时间以真实时间为准，存档
+	RoleTitleTypeCount             // 角色称号类型总数
+)
+
+// RoleTitleTime : 角色称号时间
+type RoleTitleTime struct {
+	Type     int32 // 称号时间类型，跟称号类型定义一致
+	Time     int32 // 称号时间，剩余游戏帧数
+	TrueTime int32 // 称号时间，剩余时间秒数
 }
 
-// PlayerTitle :
-type PlayerTitle struct {
-	Time          TitleTime
-	TitleID       uint32
-	ActiveTitleID byte
+// RoleTitle : 角色称号数据
+type RoleTitle struct {
+	TitleTime       RoleTitleTime // 角色称号时间
+	TitleID         uint32        // 角色称号ID
+	IsActiveTitleID byte          // 是否当前激活的称号ID
 }
 
 // MaxSkillLevelInfoItem :
@@ -292,15 +300,24 @@ type MaxSkillLevelInfo struct {
 
 // enum custom struct type
 const (
-	CustomStructPlayerPartner = iota
-	CustomStructTypeTotal
+	CustomDataTypeOfPartner = iota
+	CustomStructTypeCount
 )
 
-// CustomStructHeader :
-type CustomStructHeader struct {
-	Type     byte
-	Size     uint32
+// CustomDataHeader : 角色状态数据中的自定义类型数据
+type CustomDataHeader struct {
+	Type     byte   // 自定义状态数据类型
+	Size     uint32 // 自定义状态数据类型大小，size = header大小 + 数据大小
 	Reserved [11]byte
+}
+
+// CustomDataOfPartnerHeader : 角色状态自定义数据的同伴数据的数据头
+type CustomDataOfPartnerHeader struct {
+	CustomDataHeader
+	CurPartnerIDX          byte // 当前选择的同伴在管理同伴数组中的索引
+	IsCurPartnerCalledOut  byte // 当前选择的同伴是否召唤状态
+	IsCurPartnerFollowOnly byte // 当前选择的同伴是否只是跟随状态
+	PartnerCount           byte // 管理同伴数组大小
 }
 
 // SkillCDData :
