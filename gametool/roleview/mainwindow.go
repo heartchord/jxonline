@@ -20,12 +20,12 @@ type MyMainWindow struct {
 	prevFilePath string
 }
 
+var mw = new(MyMainWindow)
+var bp = new(RoleBakPage)
+var dp = new(RoleDbPage)
+
 func main() {
 	dcl.MustRegisterCondition("isSpecialMode", isSpecialMode)
-
-	mw := new(MyMainWindow)
-	bp := new(RoleBakPage)
-	dp := new(RoleDbPage)
 
 	var openAction, showAboutBoxAction *walk.Action
 	var recentMenu *walk.Menu
@@ -139,6 +139,7 @@ func main() {
 	}
 
 	bp.webView.SetURL("C:\\")
+	NewMyWebView(bp.webView)
 
 	addRecentFileActions := func(texts ...string) {
 		for _, text := range texts {
