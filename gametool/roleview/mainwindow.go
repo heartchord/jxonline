@@ -23,6 +23,7 @@ type MyMainWindow struct {
 var mw = new(MyMainWindow)
 var bp = new(RoleBakPage)
 var dp = new(RoleDbPage)
+var bakdb = new(BakFileInfoBindData)
 
 func main() {
 	dcl.MustRegisterCondition("isSpecialMode", isSpecialMode)
@@ -129,17 +130,14 @@ func main() {
 		Children: []dcl.Widget{
 			dcl.TabWidget{
 				Pages: []dcl.TabPage{
-					*bp.Create(mw),
-					*dp.Create(mw),
+					*bp.Create(),
+					*dp.Create(),
 				},
 			},
 		},
 	}.Create()); err != nil {
 		log.Fatal(err)
 	}
-
-	bp.webView.SetURL("C:\\")
-	NewMyWebView(bp.webView)
 
 	addRecentFileActions := func(texts ...string) {
 		for _, text := range texts {

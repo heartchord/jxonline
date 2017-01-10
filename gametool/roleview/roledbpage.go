@@ -7,16 +7,13 @@ import (
 
 // RoleDbPage :
 type RoleDbPage struct {
-	parent *MyMainWindow
-	self   *walk.TabPage
+	*walk.TabPage
 }
 
 // Create is
-func (pg *RoleDbPage) Create(parent *MyMainWindow) *dcl.TabPage {
-	pg.parent = parent
-
+func (pg *RoleDbPage) Create() *dcl.TabPage {
 	return &dcl.TabPage{
-		AssignTo: &pg.self,
+		AssignTo: &pg.TabPage,
 		Title:    "Role DB",
 		Layout:   dcl.VBox{},
 	}

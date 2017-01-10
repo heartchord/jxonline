@@ -50,6 +50,22 @@ func (d *DirectoryNode) ChildAt(index int) walk.TreeItem {
 	return d.children[index]
 }
 
+// FindChild returns the child index by child.name
+func (d *DirectoryNode) FindChild(name string) int {
+	for i, v := range d.children {
+		if v.name == name {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// Image :
+func (d *DirectoryNode) Image() interface{} {
+	return d.Path()
+}
+
 // ResetChildren rebuilds all children nodes of current directory node
 func (d *DirectoryNode) ResetChildren() error {
 	d.children = nil
@@ -197,6 +213,11 @@ func (m *FileInfoModel) SetDirPath(dirPath string) error {
 	m.PublishRowsReset()
 
 	return nil
+}
+
+// Image :
+func (m *FileInfoModel) Image(row int) interface{} {
+	return filepath.Join(m.dirPath, m.items[row].Name)
 }
 
 func shouldExclude(name string) bool {
