@@ -2,28 +2,40 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/heartchord/goblazer"
+	"github.com/heartchord/jxonline/gameencoder"
+	"github.com/henrylee2cn/mahonia"
 	"github.com/lxn/walk"
 	dcl "github.com/lxn/walk/declarative"
 )
 
 // BakFileInfoBindData :
 type BakFileInfoBindData struct {
-	BakURL string
+	BakFilePath string
 }
 
 // RoleBakPage : role bak analyse page
 type RoleBakPage struct {
 	*walk.TabPage
-	bakFilePathText *walk.LineEdit
-	db              *walk.DataBinder
-	treeView        *walk.TreeView
-	tableView       *walk.TableView
-	treeModel       *DirectoryTreeModel
-	tableModel      *FileInfoModel
+	bakDataBinder *walk.DataBinder
+	treeView      *walk.TreeView
+	tableView     *walk.TableView
+	treeModel     *DirectoryTreeModel
+	tableModel    *FileInfoModel
+
+	bakFilePathText        *walk.LineEdit
+	bakFileRoleNameLenText *walk.LineEdit
+	bakFileRoleDataLenText *walk.LineEdit
+	bakFileRoleNameText    *walk.LineEdit
+	bakFileProcessLogText  *walk.TextEdit
+	bakFileCRC1            *walk.LineEdit
+	bakFileCRC2            *walk.LineEdit
 }
 
 // Create creates a new RoleBakPage instance
@@ -36,7 +48,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 	}
 
 	// create FileInfoModel
-	bp.tableModel = NewFileInfoModel()
+	roleBakPage.tableModel = NewFileInfoModel()
 
 	var ep walk.ErrorPresenter
 	tab := &dcl.TabPage{
@@ -44,8 +56,12 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 		Title:    "Role Bak",
 		Layout:   dcl.HBox{},
 		DataBinder: dcl.DataBinder{
-			AssignTo:       &bp.db,
-			DataSource:     bakdb,
+			AssignTo:   &roleBakPage.bakDataBinder,
+			DataSource: bakBindData,
+			AutoSubmit: true,
+			//OnSubmitted: func() {
+			//	fmt.Println("OnSubmitted")
+			//},
 			ErrorPresenter: dcl.ErrorPresenterRef{ErrorPresenter: &ep},
 		},
 		Children: []dcl.Widget{
@@ -57,17 +73,17 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 						MinSize:              dcl.Size{Width: 100, Height: 0},
 						Font:                 dcl.Font{Family: "微软雅黑", PointSize: 10},
 						Model:                pg.treeModel,
-						OnCurrentItemChanged: bp.onCurrentTreeViewItemChanged,
-						OnSizeChanged:        bp.onCurrentTreeViewSizeChanged,
+						OnCurrentItemChanged: roleBakPage.onCurrentTreeViewItemChanged,
+						OnSizeChanged:        roleBakPage.onCurrentTreeViewSizeChanged,
 					},
 					dcl.TableView{
-						AssignTo:              &bp.tableView,
+						AssignTo:              &roleBakPage.tableView,
 						Font:                  dcl.Font{Family: "微软雅黑", PointSize: 10},
-						Model:                 bp.tableModel,
+						Model:                 roleBakPage.tableModel,
 						StretchFactor:         2,
-						OnCurrentIndexChanged: bp.onCurrentTableViewItemChanged,
-						OnItemActivated:       bp.onCurrentTableViewItemActivated,
-						OnKeyDown:             bp.onCurrentTableViewKeyDown,
+						OnCurrentIndexChanged: roleBakPage.onCurrentTableViewItemChanged,
+						OnItemActivated:       roleBakPage.onCurrentTableViewItemActivated,
+						OnKeyDown:             roleBakPage.onCurrentTableViewKeyDown,
 						Columns: []dcl.TableViewColumn{
 							dcl.TableViewColumn{
 								DataMember: "Name",
@@ -103,7 +119,8 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 12, Bold: true},
 							},
 							dcl.LineEdit{
-								AssignTo:   &bp.bakFilePathText,
+								AssignTo:   &roleBakPage.bakFilePathText,
+								Text:       dcl.Bind("BakFilePath"),
 								ColumnSpan: 1,
 								ReadOnly:   true,
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 12},
@@ -112,19 +129,21 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "解析",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
-								OnClicked: func() {
-									fmt.Printf("OnCilcked\n")
-								},
+								OnClicked:  roleBakPage.onDecodeROleBakData,
 							},
 							dcl.TextEdit{
+								AssignTo:   &roleBakPage.bakFileProcessLogText,
 								ColumnSpan: 3,
 								MinSize:    dcl.Size{Width: 100, Height: 20},
-								Text:       "Remarks",
+								Text:       "",
+								ReadOnly:   true,
+								OnSizeChanged: func() {
+								},
 							},
 						},
 					},
 
-					dcl.VSpacer{Size: 5},
+					dcl.VSpacer{Size: 1},
 
 					dcl.Composite{ // 这里重新布局
 						MinSize: dcl.Size{Width: 0, Height: 500},
@@ -142,8 +161,9 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
+								AssignTo:   &roleBakPage.bakFileRoleNameLenText,
 								ColumnSpan: 1,
-								Text:       "asd",
+								Text:       "",
 								ReadOnly:   true,
 							},
 							dcl.Label{
@@ -152,8 +172,9 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
+								AssignTo:   &roleBakPage.bakFileRoleDataLenText,
 								ColumnSpan: 1,
-								Text:       "asd",
+								Text:       "",
 								ReadOnly:   true,
 							},
 							dcl.Label{
@@ -162,8 +183,9 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
+								AssignTo:   &roleBakPage.bakFileRoleNameText,
 								ColumnSpan: 1,
-								Text:       "asd",
+								Text:       "",
 								ReadOnly:   true,
 								MinSize:    dcl.Size{Width: 100, Height: 0},
 							},
@@ -174,8 +196,9 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
+								AssignTo:   &roleBakPage.bakFileCRC1,
 								ColumnSpan: 1,
-								Text:       "asd",
+								Text:       "",
 								ReadOnly:   true,
 							},
 							dcl.Label{
@@ -184,6 +207,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
+								AssignTo:   &roleBakPage.bakFileCRC2,
 								ColumnSpan: 1,
 								Text:       "asd",
 								ReadOnly:   true,
@@ -204,8 +228,8 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 
 // Tree View Event Handler
 func (pg *RoleBakPage) onCurrentTreeViewItemChanged() {
-	dir := bp.treeView.CurrentItem().(*DirectoryNode)
-	err := bp.tableModel.SetDirPath(dir.Path())
+	dir := roleBakPage.treeView.CurrentItem().(*DirectoryNode)
+	err := roleBakPage.tableModel.SetDirPath(dir.Path())
 	if err != nil {
 		walk.MsgBox(mw, "Error", err.Error(),
 			walk.MsgBoxOK|walk.MsgBoxIconError)
@@ -218,26 +242,25 @@ func (pg *RoleBakPage) onCurrentTreeViewSizeChanged() {
 // Table View Event Handler
 func (pg *RoleBakPage) onCurrentTableViewItemChanged() {
 	var url string
-	if index := bp.tableView.CurrentIndex(); index > -1 {
-		name := bp.tableModel.items[index].Name
-		dir := bp.treeView.CurrentItem().(*DirectoryNode)
+	if index := roleBakPage.tableView.CurrentIndex(); index > -1 {
+		name := roleBakPage.tableModel.items[index].Name
+		dir := roleBakPage.treeView.CurrentItem().(*DirectoryNode)
 		url = filepath.Join(dir.Path(), name)
+		roleBakPage.bakFilePathText.SetText(url)
 	}
-
-	bp.bakFilePathText.SetText(url)
 }
 
 func (pg *RoleBakPage) onCurrentTableViewItemActivated() {
 
-	tlvIndex := bp.tableView.CurrentIndex()
+	tlvIndex := roleBakPage.tableView.CurrentIndex()
 	if tlvIndex <= -1 {
 		return
 	}
 
-	curItem := bp.treeView.CurrentItem()
+	curItem := roleBakPage.treeView.CurrentItem()
 	curNode := curItem.(*DirectoryNode)
 
-	name := bp.tableModel.items[tlvIndex].Name
+	name := roleBakPage.tableModel.items[tlvIndex].Name
 	trvIndex := curNode.FindChild(name)
 	if trvIndex <= -1 {
 		return
@@ -249,11 +272,11 @@ func (pg *RoleBakPage) onCurrentTableViewItemActivated() {
 	}
 
 	// 更新目录树
-	bp.treeView.SetExpanded(curItem, true)
+	roleBakPage.treeView.SetExpanded(curItem, true)
 	child := curNode.ChildAt(trvIndex)
-	bp.treeView.SetCurrentItem(child)
+	roleBakPage.treeView.SetCurrentItem(child)
 
-	err := bp.tableModel.SetDirPath(path)
+	err := roleBakPage.tableModel.SetDirPath(path)
 	if err != nil {
 		walk.MsgBox(mw, "Error", err.Error(),
 			walk.MsgBoxOK|walk.MsgBoxIconError)
@@ -265,7 +288,7 @@ func (pg *RoleBakPage) onCurrentTableViewKeyDown(key walk.Key) {
 	switch key {
 	case walk.KeyBack:
 		{
-			curItem := bp.treeView.CurrentItem()
+			curItem := roleBakPage.treeView.CurrentItem()
 			if curItem == nil {
 				return
 			}
@@ -277,15 +300,63 @@ func (pg *RoleBakPage) onCurrentTableViewKeyDown(key walk.Key) {
 			parentNode := parentItem.(*DirectoryNode)
 
 			// 更新目录树
-			bp.treeView.SetExpanded(parentItem, true)
-			bp.treeView.SetExpanded(curItem, false)
-			bp.treeView.SetCurrentItem(parentItem)
+			roleBakPage.treeView.SetExpanded(parentItem, true)
+			roleBakPage.treeView.SetExpanded(curItem, false)
+			roleBakPage.treeView.SetCurrentItem(parentItem)
 
-			err := bp.tableModel.SetDirPath(parentNode.Path())
+			err := roleBakPage.tableModel.SetDirPath(parentNode.Path())
 			if err != nil {
 				walk.MsgBox(mw, "Error", err.Error(),
 					walk.MsgBoxOK|walk.MsgBoxIconError)
 			}
 		}
 	}
+}
+
+func (pg *RoleBakPage) onDecodeROleBakData() {
+	roleBakPage.bakFileProcessLogText.SetText("")
+	go BakDecodeRoutineFunction(bakBindData.BakFilePath)
+}
+
+// WriteLog :
+func (pg *RoleBakPage) WriteLog(format string, a ...interface{}) (n int, err error) {
+	ts := time.Now().Unix()
+	tm := time.Unix(ts, 0)
+	t := tm.Format("2006-01-02 15:04:05")
+
+	format = t + " : " + format + "\r\n"
+	log := fmt.Sprintf(format, a...)
+	roleBakPage.bakFileProcessLogText.AppendText(log)
+	return roleBakPage.bakFileProcessLogText.TextLength(), nil
+}
+
+// BakDecodeRoutineFunction :
+func BakDecodeRoutineFunction(path string) {
+	fi, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer fi.Close()
+
+	data, err := ioutil.ReadAll(fi)
+	encoder := gameencoder.NewRoleBakEncoder()
+	encoder.SetLogger(roleBakPage.WriteLog)
+	encoder.Decode(data)
+
+	mdecoder := mahonia.NewDecoder("GBK")
+
+	roleName := string(encoder.BakData.RoleNameGBK)
+	roleName = mdecoder.ConvertString(roleName)
+	roleNameLen := fmt.Sprintf("%d", encoder.BakData.RoleNameLen)
+	roleDataLen := fmt.Sprintf("%d", encoder.BakData.RoleDataLen)
+
+	roleBakPage.bakFileRoleNameText.SetText(roleName)
+	roleBakPage.bakFileRoleNameLenText.SetText(roleNameLen)
+	roleBakPage.bakFileRoleDataLenText.SetText(roleDataLen)
+
+	crc1 := fmt.Sprintf("%X", encoder.CRC32Cal)
+	roleBakPage.bakFileCRC1.SetText(crc1)
+
+	crc2 := fmt.Sprintf("%X", encoder.CRC32Read)
+	roleBakPage.bakFileCRC2.SetText(crc2)
 }

@@ -3,7 +3,11 @@ package gameencoder
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 )
+
+// LogWriter :
+type LogWriter func(format string, a ...interface{}) (n int, err error)
 
 // RoleBakHeader : a data struct of role bak data header
 type RoleBakHeader struct {
@@ -25,18 +29,26 @@ type RoleBakData struct {
 
 // RoleBakEncoder : a data struct of role bak encoder and decoder
 type RoleBakEncoder struct {
-	BakData RoleBakData
-	RoleEncoder
+	BakData     RoleBakData // 原始角色数据
+	RoleEncoder             // 角色解码器
+	logger      LogWriter   // 日志函数
 }
 
 // NewRoleBakEncoder : 123
 func NewRoleBakEncoder() (en *RoleBakEncoder) {
 	en = new(RoleBakEncoder)
+	en.logger = fmt.Printf
 
 	// 初始化ReadFunction
 	en.RoleEncoder.Init()
-
+	en.RoleEncoder.SetLogger(fmt.Printf)
 	return en
+}
+
+// SetLogger :
+func (en *RoleBakEncoder) SetLogger(logger LogWriter) {
+	en.logger = logger
+	en.RoleEncoder.SetLogger(logger)
 }
 
 // Decode : function to decode original role bak data
@@ -61,7 +73,7 @@ func (en *RoleBakEncoder) decodeBakHeader(data []byte) bool {
 		return false
 	}
 
-	// 获取角色名长度
+	// 获取角色名长度(包含'\0'结束符)
 	tmplen := uint32(0)
 	tmpbuf := bytes.NewBuffer(data[current:4]) // [0, 3]存储角色名长度
 	binary.Read(tmpbuf, binary.LittleEndian, &tmplen)
@@ -69,7 +81,7 @@ func (en *RoleBakEncoder) decodeBakHeader(data []byte) bool {
 	current += 4
 
 	// 获取角色名
-	n := 4 + en.BakData.RoleNameLen
+	n := 4 + en.BakData.RoleNameLen - 1              // 要去掉'\0'字符
 	if en.BakData.RoleNameLen <= 0 || dataLen <= n { // 角色名长度 <= 0 或 数据长度 <= 角色名数据头长度 + 角色名长度
 		return false
 	}

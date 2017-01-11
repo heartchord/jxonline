@@ -21,9 +21,9 @@ type MyMainWindow struct {
 }
 
 var mw = new(MyMainWindow)
-var bp = new(RoleBakPage)
-var dp = new(RoleDbPage)
-var bakdb = new(BakFileInfoBindData)
+var roleBakPage = new(RoleBakPage)
+var roleDbPage = new(RoleDbPage)
+var bakBindData = new(BakFileInfoBindData)
 
 func main() {
 	dcl.MustRegisterCondition("isSpecialMode", isSpecialMode)
@@ -130,8 +130,8 @@ func main() {
 		Children: []dcl.Widget{
 			dcl.TabWidget{
 				Pages: []dcl.TabPage{
-					*bp.Create(),
-					*dp.Create(),
+					*roleBakPage.Create(),
+					*roleDbPage.Create(),
 				},
 			},
 		},

@@ -3,15 +3,20 @@ package main
 import (
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"time"
 
+	"fmt"
+
+	"github.com/heartchord/goblazer"
 	"github.com/lxn/walk"
 )
 
 // DirectoryNode is a node of a directory tree
 type DirectoryNode struct {
 	name     string
+	alias    string
 	parent   *DirectoryNode
 	children []*DirectoryNode
 }
@@ -21,8 +26,16 @@ func NewDirectoryNode(name string, parent *DirectoryNode) *DirectoryNode {
 	return &DirectoryNode{name: name, parent: parent}
 }
 
+// SetAlias returns the text of the directory node text
+func (d *DirectoryNode) SetAlias(alias string) {
+	d.alias = alias
+}
+
 // Text returns the text of the directory node text
 func (d *DirectoryNode) Text() string {
+	if len(d.alias) != 0 {
+		return d.alias
+	}
 	return d.name
 }
 
@@ -128,8 +141,18 @@ func NewDirectoryTreeModel() (*DirectoryTreeModel, error) {
 		case "A:\\", "B:\\":
 			continue
 		}
+		dnode := NewDirectoryNode(drive, nil)
+		dnode.SetAlias(fmt.Sprintf("本地磁盘(%s)", goblazer.GetPathName(drive)))
+		model.roots = append(model.roots, dnode)
+	}
 
-		model.roots = append(model.roots, NewDirectoryNode(drive, nil))
+	// 加入桌面路径
+	u, err := user.Current()
+	if err == nil {
+		drive := u.HomeDir + "\\Desktop"
+		dnode := NewDirectoryNode(drive, nil)
+		dnode.SetAlias("桌面")
+		model.roots = append(model.roots, dnode)
 	}
 
 	return model, nil

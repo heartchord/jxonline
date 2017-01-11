@@ -27,22 +27,22 @@ type playerExtDataReader func(data []byte, current *uint32) bool
 
 // RoleEncoder : a data struct of role bak encoder and decoder
 type RoleEncoder struct {
-	RoleBaseData       gmstruct.RoleBaseData       // 角色基础数据
-	FSkillData         []gmstruct.SkillData        // 战斗技能数据
-	LSkillData         []gmstruct.SkillData        // 生活技能数据
-	TaskData           []gmstruct.TaskData         // 任务变量数据
-	ItemData           []gmstruct.ItemData         // 装备物品数据
-	SkillState         []gmstruct.SkillState       // 技能状态数据
-	SkillCD            []gmstruct.SkillCD          // 技能冷却数据
-	FeatureInfo        []gmstruct.FeatureInfo      // 角色外观数据
-	PlayerEvent        []gmstruct.PlayerEvent      // 角色事件数据
-	PlayerTitle        []gmstruct.RoleTitle        // 角色称号数据
-	CustomStructHeader []gmstruct.CustomDataHeader // 自定义数据头
-	RoleExtData        gmstruct.RoleExtData        // 角色扩展数据
-	CRC32Cal           uint32                      // 根据角色原始数据计算的CRC32码
-	CRC32Read          uint32                      // 从角色原始数据末尾读的CRC32码
-
-	extDataReader map[int32]playerExtDataReader // 角色扩展数据解析函数
+	RoleBaseData       gmstruct.RoleBaseData         // 角色基础数据
+	FSkillData         []gmstruct.SkillData          // 战斗技能数据
+	LSkillData         []gmstruct.SkillData          // 生活技能数据
+	TaskData           []gmstruct.TaskData           // 任务变量数据
+	ItemData           []gmstruct.ItemData           // 装备物品数据
+	SkillState         []gmstruct.SkillState         // 技能状态数据
+	SkillCD            []gmstruct.SkillCD            // 技能冷却数据
+	FeatureInfo        []gmstruct.FeatureInfo        // 角色外观数据
+	PlayerEvent        []gmstruct.PlayerEvent        // 角色事件数据
+	PlayerTitle        []gmstruct.RoleTitle          // 角色称号数据
+	CustomStructHeader []gmstruct.CustomDataHeader   // 自定义数据头
+	RoleExtData        gmstruct.RoleExtData          // 角色扩展数据
+	CRC32Cal           uint32                        // 根据角色原始数据计算的CRC32码
+	CRC32Read          uint32                        // 从角色原始数据末尾读的CRC32码
+	logger             LogWriter                     // 日志函数
+	extDataReader      map[int32]playerExtDataReader // 角色扩展数据解析函数
 }
 
 // Init : 123
@@ -60,6 +60,11 @@ func (en *RoleEncoder) Init() bool {
 	return true
 }
 
+// SetLogger :
+func (en *RoleEncoder) SetLogger(logger LogWriter) {
+	en.logger = logger
+}
+
 // Decode : function to decode original role bak data
 func (en *RoleEncoder) Decode(data []byte) bool {
 	current := uint32(0)
@@ -68,52 +73,56 @@ func (en *RoleEncoder) Decode(data []byte) bool {
 	dataLen := len(data)
 	en.CRC32Cal = CRC32(0, data[:dataLen-4])
 
+	// 读取CRC32
+	tmpbuf := bytes.NewBuffer(data[dataLen-4 : dataLen]) // [0, 3]存储角色名长度
+	binary.Read(tmpbuf, binary.LittleEndian, &en.CRC32Read)
+
 	// 角色基本信息解码
 	if !en.decodeRoleBaseInfo(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, SkillOffset   = %-4d\n", current, en.RoleBaseData.FSkillOffset)
+	en.logger("CurrentPos = %-4d, SkillOffset = %-4d\n", current, en.RoleBaseData.FSkillOffset)
 
 	// 角色战斗技能解码
 	if !en.decodeRoleFSkillData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, LSkillOffset  = %-4d\n", current, en.RoleBaseData.LSkillOffset)
+	en.logger("CurrentPos = %-4d, LSkillOffset = %-4d\n", current, en.RoleBaseData.LSkillOffset)
 
 	// 角色生活技能解码
 	if !en.decodeRoleLSkillData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, TaskOffset    = %-4d\n", current, en.RoleBaseData.TaskOffset)
+	en.logger("CurrentPos = %-4d, TaskOffset = %-4d\n", current, en.RoleBaseData.TaskOffset)
 
 	// 角色任务变量解码
 	if !en.decodeRoleTaskData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, ItemOffset    = %-4d\n", current, en.RoleBaseData.ItemOffset)
+	en.logger("CurrentPos = %-4d, ItemOffset = %-4d\n", current, en.RoleBaseData.ItemOffset)
 
 	// 角色装备道具解码
 	if !en.decodeRoleItemData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, StateOffset   = %-4d\n", current, en.RoleBaseData.StateOffset)
+	en.logger("CurrentPos = %-4d, StateOffset = %-4d\n", current, en.RoleBaseData.StateOffset)
 
 	if !en.decodeRoleStateList(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, ExtBuffOffset = %-4d\n", current, en.RoleBaseData.ExtBuffOffset)
+	en.logger("CurrentPos = %-4d, ExtBuffOffset = %-4d\n", current, en.RoleBaseData.ExtBuffOffset)
 
 	if !en.decodeRoleExtData(data, &current) {
 		return false
 	}
 
-	fmt.Printf("CurrentPos = %-4d, RoleDataLen   = %-4d\n", current, en.RoleBaseData.DataLen)
+	en.logger("CurrentPos = %-4d, RoleDataLen = %-4d\n", current, en.RoleBaseData.DataLen)
 
 	return true
 }
