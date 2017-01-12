@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/lxn/walk"
@@ -139,6 +140,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	mw.setIcon("../../gameresource/img/sword1_classic.ico")
+	mw.setNotifyIcon("../../gameresource/img/sword1_classic.ico")
+
+	mw.Closing().Attach(mw.closeEventHandler)
+	mw.Disposing().Attach(mw.disposingEventHandler)
+
 	addRecentFileActions := func(texts ...string) {
 		for _, text := range texts {
 			a := walk.NewAction()
@@ -151,6 +158,78 @@ func main() {
 	addRecentFileActions("Foo", "Bar", "Baz")
 
 	mw.Run()
+}
+
+func (mw *MyMainWindow) setIcon(path string) {
+	icon, err := walk.NewIconFromFile(path)
+
+	if err != nil {
+		return
+	}
+
+	if mw != nil {
+		mw.SetIcon(icon)
+	}
+}
+
+func (mw *MyMainWindow) setNotifyIcon(path string) {
+	icon, err := walk.NewIconFromFile(path)
+	if err != nil {
+		return
+	}
+
+	ni, err := walk.NewNotifyIcon()
+	if err != nil {
+		return
+	}
+
+	err = ni.SetIcon(icon)
+	if err != nil {
+		return
+	}
+
+	err = ni.SetToolTip("单击图标显示程序窗口，右键图标显示或关闭程序")
+	if err != nil {
+		return
+	}
+	ni.MouseDown().Attach(mw.notifyIconMouseDownHandler)
+
+	// 结束选项
+	exitAction := walk.NewAction()
+	err = exitAction.SetText("退出(&x)")
+	if err != nil {
+		return
+	}
+	exitAction.Triggered().Attach(mw.notifyIconExitActionHandler)
+
+	err = ni.ContextMenu().Actions().Add(exitAction)
+	if err != nil {
+		return
+	}
+
+	// 打开选项
+	openAction := walk.NewAction()
+	err = openAction.SetText("打开(&o)")
+	if err != nil {
+		return
+	}
+	openAction.Triggered().Attach(mw.notifyIconOpenActionHandler)
+
+	err = ni.ContextMenu().Actions().Add(openAction)
+	if err != nil {
+		return
+	}
+
+	// 显示通知栏图标
+	err = ni.SetVisible(true)
+	if err != nil {
+		return
+	}
+
+	err = ni.ShowInfo("角色存档信息查看工具", "点击通知栏图标可以重新显示程序窗口.")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (mw *MyMainWindow) openFile() error {
@@ -191,4 +270,29 @@ func (mw *MyMainWindow) showAboutBoxActionTriggered() {
 
 func (mw *MyMainWindow) specialActionTriggered() {
 	walk.MsgBox(mw, "Special", "Nothing to see here.", walk.MsgBoxIconInformation)
+}
+
+func (mw *MyMainWindow) disposingEventHandler() {
+	fmt.Println("Disposing Event Handler")
+}
+
+func (mw *MyMainWindow) closeEventHandler(canceled *bool, reason walk.CloseReason) {
+	mw.Hide()
+	*canceled = true
+}
+
+func (mw *MyMainWindow) notifyIconMouseDownHandler(x, y int, button walk.MouseButton) {
+	if button != walk.LeftButton {
+		return
+	}
+
+	mw.Show()
+}
+
+func (mw *MyMainWindow) notifyIconExitActionHandler() {
+	walk.App().Exit(0)
+}
+
+func (mw *MyMainWindow) notifyIconOpenActionHandler() {
+	mw.Show()
 }
