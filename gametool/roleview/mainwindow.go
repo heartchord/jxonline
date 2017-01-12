@@ -7,6 +7,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"time"
 
 	"github.com/lxn/walk"
 
@@ -27,6 +29,7 @@ var roleDbPage = new(RoleDbPage)
 var bakBindData = new(BakFileInfoBindData)
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	dcl.MustRegisterCondition("isSpecialMode", isSpecialMode)
 
 	var openAction, showAboutBoxAction *walk.Action

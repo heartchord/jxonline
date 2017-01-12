@@ -23,11 +23,13 @@ type BakFileInfoBindData struct {
 // RoleBakPage : role bak analyse page
 type RoleBakPage struct {
 	*walk.TabPage
-	bakDataBinder *walk.DataBinder
-	treeView      *walk.TreeView
-	tableView     *walk.TableView
-	treeModel     *DirectoryTreeModel
-	tableModel    *FileInfoModel
+	bakDataBinder     *walk.DataBinder
+	treeView          *walk.TreeView
+	tableView         *walk.TableView
+	roleBaseDataTV    *walk.TableView
+	treeModel         *DirectoryTreeModel
+	tableModel        *FileInfoModel
+	roleBaseDataModel *RoleBaseDataModel
 
 	bakFilePathText        *walk.LineEdit
 	bakFileRoleNameLenText *walk.LineEdit
@@ -49,6 +51,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 
 	// create FileInfoModel
 	roleBakPage.tableModel = NewFileInfoModel()
+	roleBakPage.roleBaseDataModel = NewRoleBaseDataModel()
 
 	var ep walk.ErrorPresenter
 	tab := &dcl.TabPage{
@@ -116,19 +119,19 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 							dcl.Label{
 								ColumnSpan: 1,
 								Text:       "Bak文件路径：",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 12, Bold: true},
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFilePathText,
 								Text:       dcl.Bind("BakFilePath"),
 								ColumnSpan: 1,
 								ReadOnly:   true,
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 12},
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
 							},
 							dcl.PushButton{
 								ColumnSpan: 1,
 								Text:       "解析",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 								OnClicked:  roleBakPage.onDecodeROleBakData,
 							},
 							dcl.TextEdit{
@@ -143,8 +146,6 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 						},
 					},
 
-					dcl.VSpacer{Size: 1},
-
 					dcl.Composite{ // 这里重新布局
 						MinSize: dcl.Size{Width: 0, Height: 500},
 						Font:    dcl.Font{Family: "微软雅黑", PointSize: 10},
@@ -152,13 +153,13 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 						Children: []dcl.Widget{
 							dcl.Label{
 								ColumnSpan: 6,
-								Text:       "Bak头部信息:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 12, Bold: true},
+								Text:       "【Bak头部信息】",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
 							dcl.Label{
 								ColumnSpan: 1,
-								Text:       "角色名长度:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+								Text:       "角色名长度：",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFileRoleNameLenText,
@@ -168,8 +169,8 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 							},
 							dcl.Label{
 								ColumnSpan: 1,
-								Text:       "角色数据长度:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+								Text:       "角色数据长度：",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFileRoleDataLenText,
@@ -179,8 +180,8 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 							},
 							dcl.Label{
 								ColumnSpan: 1,
-								Text:       "角色名:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+								Text:       "角色名：",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFileRoleNameText,
@@ -192,8 +193,8 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 
 							dcl.Label{
 								ColumnSpan: 1,
-								Text:       "CRC1:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+								Text:       "CRC1：",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFileCRC1,
@@ -203,18 +204,37 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 							},
 							dcl.Label{
 								ColumnSpan: 1,
-								Text:       "CRC2:",
-								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+								Text:       "CRC2：",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 							},
 							dcl.LineEdit{
 								AssignTo:   &roleBakPage.bakFileCRC2,
 								ColumnSpan: 1,
-								Text:       "asd",
+								Text:       "",
 								ReadOnly:   true,
 							},
-							dcl.TextEdit{
+
+							dcl.Label{
 								ColumnSpan: 6,
-								MinSize:    dcl.Size{Width: 100, Height: 20},
+								Text:       "【角色基础数据信息】",
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+							},
+							dcl.TableView{
+								AssignTo:         &roleBakPage.roleBaseDataTV,
+								ColumnSpan:       6,
+								CheckBoxes:       true,
+								ColumnsOrderable: true,
+								MultiSelection:   true,
+								Columns: []dcl.TableViewColumn{
+									{Title: "数据索引"},
+									{Title: "数据名称"},
+									{Title: "数据内容", Format: "%.2f", Alignment: dcl.AlignFar},
+									{Title: "数据说明", Format: "2006-01-02 15:04:05", Width: 150},
+								},
+								Model: roleBakPage.roleBaseDataModel,
+								OnSelectedIndexesChanged: func() {
+									fmt.Printf("SelectedIndexes: %v\n", roleBakPage.roleBaseDataTV.SelectedIndexes())
+								},
 							},
 						},
 					},
@@ -359,4 +379,6 @@ func BakDecodeRoutineFunction(path string) {
 
 	crc2 := fmt.Sprintf("%X", encoder.CRC32Read)
 	roleBakPage.bakFileCRC2.SetText(crc2)
+
+	roleBakPage.roleBaseDataModel.ResetRows(&encoder.RoleBaseData)
 }
