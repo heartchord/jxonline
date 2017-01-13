@@ -125,9 +125,9 @@ func main() {
 			},
 		},
 
-		ContextMenuItems: []dcl.MenuItem{
-			dcl.ActionRef{Action: &showAboutBoxAction},
-		},
+		//ContextMenuItems: []dcl.MenuItem{
+		//	dcl.ActionRef{Action: &showAboutBoxAction},
+		//},
 		MinSize: dcl.Size{Width: 1200, Height: 900},
 		Layout:  dcl.VBox{},
 

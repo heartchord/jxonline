@@ -140,13 +140,14 @@ func getStructFieldStrings(s interface{}) []string {
 	var ret []string
 
 	o := reflect.ValueOf(s)
-
 	if o.Kind() != reflect.Struct {
 		panic("Unexpected Data Type")
 	}
 
 	mdecoder := mahonia.NewDecoder("GBK")
-	for i := 0; i < o.NumField(); i++ {
+
+	count := o.NumField()
+	for i := 0; i < count; i++ {
 		v := o.Field(i)
 		if v.Kind() == reflect.Struct {
 			sub := getStructFieldStrings(v.Interface())
@@ -154,34 +155,32 @@ func getStructFieldStrings(s interface{}) []string {
 			continue
 		}
 
-		if v.Kind() == reflect.Array {
-			s := ""
+		if v.Kind() == reflect.Array || v.Kind() == reflect.Slice {
 			var slice []byte
 
-			l := v.Len()
-			for i := 0; i < l; i++ {
-				bytestr := fmt.Sprintf("%v", v.Index(i))
-				bytecon, _ := strconv.Atoi(bytestr)
-				if bytecon != 0 {
-					slice = append(slice, byte(bytecon))
+			str := ""
+			length := v.Len()
+
+			for i := 0; i < length; i++ {
+				valStr := fmt.Sprintf("%v", v.Index(i))
+				value, err := strconv.Atoi(valStr)
+
+				if err != nil {
+					panic("Wrong String Content")
 				}
-				s = string(slice)
+
+				if value != 0 {
+					slice = append(slice, byte(value))
+				}
+				str = string(slice)
 			}
 
-			s = mdecoder.ConvertString(s)
-			fmt.Println(len(s))
-			fmt.Println(s)
+			str = mdecoder.ConvertString(str)
+			ret = append(ret, str)
 
-			ret = append(ret, s)
-
-		} else if v.Kind() == reflect.Slice {
-			s := string(v.Bytes())
-			s = mdecoder.ConvertString(s)
-			ret = append(ret, s)
 		} else {
 			ret = append(ret, fmt.Sprintf("%v", v))
 		}
-
 	}
 
 	return ret
@@ -189,26 +188,39 @@ func getStructFieldStrings(s interface{}) []string {
 
 // ResetRows :
 func (m *RoleBaseDataModel) ResetRows(data *gamestruct.RoleBaseData) {
-	// 获取角色基础数据成员个数
-	nFieldCount := int(goblazer.GetStructFieldNum(*data))
-	fieldNames := goblazer.GetStructFieldNames(*data)
-	fieldStrings := getStructFieldStrings(*data)
+	fieldCount := int(goblazer.GetStructFieldNum(*data)) // 获取角色基础数据成员个数
+	fieldNames := goblazer.GetStructFieldNames(*data)    // 获取角色基础数据成员名称
+	fieldStrings := getStructFieldStrings(*data)         // 获取角色基础数据成员内容
+	fieldTags := goblazer.GetStructFieldTags(*data)
 
 	if m.items == nil {
-		m.items = make([]*RoleBaseDataItem, nFieldCount)
+		m.items = make([]*RoleBaseDataItem, fieldCount)
 	}
 
-	for i := 0; i < nFieldCount; i++ {
+	for i := 0; i < fieldCount; i++ {
 		m.items[i] = &RoleBaseDataItem{
 			Index:   i,
 			Name:    fieldNames[i],
 			Content: fieldStrings[i],
-			//Comment: time.Unix(rand.Int63n(now.Unix()), 0).Format("2006-01-02 15:04:05"),
+			Comment: fieldTags[i],
 		}
 	}
 
 	// Notify TableView and other interested parties about the reset.
 	m.PublishRowsReset()
-
 	m.Sort(m.sortColumn, m.sortOrder)
+}
+
+// SetRowContent :
+func (m *RoleBaseDataModel) SetRowContent(idx int, content string) {
+	m.items[idx].Content = content
+	roleBakPage.roleBaseDataModel.PublishRowChanged(idx)
+}
+
+// SwitchRowCheckedState :
+func (m *RoleBaseDataModel) SwitchRowCheckedState(idx int) {
+	checked := m.Checked(idx)
+	m.SetChecked(idx, !checked)
+	m.PublishRowChanged(idx)
+
 }
