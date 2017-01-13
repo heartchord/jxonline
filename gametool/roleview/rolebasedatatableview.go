@@ -14,11 +14,12 @@ import (
 
 // RoleBaseDataItem :
 type RoleBaseDataItem struct {
-	Index   int    // 索引
-	Name    string // 数据名称
-	Content string // 数据内容
-	Comment string // 数据说明
-	checked bool   // 是否选中
+	Index         int    // 索引
+	Name          string // 数据名称
+	Content       string // 数据内容
+	Comment       string // 数据说明
+	OriginContent string // 数据原始名称（数据内容可能改变）
+	checked       bool   // 是否选中
 }
 
 // RoleBaseDataModel :
@@ -199,10 +200,11 @@ func (m *RoleBaseDataModel) ResetRows(data *gamestruct.RoleBaseData) {
 
 	for i := 0; i < fieldCount; i++ {
 		m.items[i] = &RoleBaseDataItem{
-			Index:   i,
-			Name:    fieldNames[i],
-			Content: fieldStrings[i],
-			Comment: fieldTags[i],
+			Index:         i,
+			Name:          fieldNames[i],
+			Content:       fieldStrings[i],
+			OriginContent: fieldStrings[i],
+			Comment:       fieldTags[i],
 		}
 	}
 
@@ -222,5 +224,9 @@ func (m *RoleBaseDataModel) SwitchRowCheckedState(idx int) {
 	checked := m.Checked(idx)
 	m.SetChecked(idx, !checked)
 	m.PublishRowChanged(idx)
+}
 
+// Items :
+func (m *RoleBaseDataModel) Items() []*RoleBaseDataItem {
+	return m.items
 }

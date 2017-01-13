@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/heartchord/goblazer"
@@ -140,7 +141,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 							dcl.TextEdit{
 								AssignTo:   &pg.bakFileProcessLogText,
 								ColumnSpan: 3,
-								MinSize:    dcl.Size{Width: 100, Height: 20},
+								MinSize:    dcl.Size{Width: 100, Height: 100},
 								Text:       "",
 								ReadOnly:   true,
 								OnSizeChanged: func() {
@@ -218,55 +219,66 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 					},
 
 					dcl.Composite{ // 这里重新布局
-						AssignTo: &pg.roleBaseDataComposite,
-						MinSize:  dcl.Size{Width: 0, Height: 450},
-						Font:     dcl.Font{Family: "微软雅黑", PointSize: 10},
-						Layout:   dcl.Grid{Columns: 1, Spacing: 10},
+						MinSize: dcl.Size{Width: 0, Height: 400},
+						Font:    dcl.Font{Family: "微软雅黑", PointSize: 10},
+						Layout:  dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.Label{
 								ColumnSpan: 1,
 								Text:       "【角色基础数据信息】",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
 							},
-							dcl.TableView{
-								AssignTo:         &pg.roleBaseDataTV,
-								ColumnSpan:       1,
-								CheckBoxes:       true,
-								ColumnsOrderable: true,
-								MultiSelection:   true,
-								Columns: []dcl.TableViewColumn{
-									{Title: "数据索引"},
-									{Title: "数据名称"},
-									{Title: "数据内容"},
-									{Title: "数据说明"},
+							dcl.Composite{ // 这里重新布局
+								AssignTo:   &pg.roleBaseDataComposite,
+								ColumnSpan: 1,
+								Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
+								Layout:     dcl.Grid{Columns: 1, Spacing: 10},
+								ContextMenuItems: []dcl.MenuItem{
+									dcl.Action{
+										Text:        "时间戳转换",
+										OnTriggered: pg.timeStamp2timeActionHandler,
+									},
+									dcl.Action{
+										Text:        "十六进制显示",
+										OnTriggered: pg.notifyIconOpenActionHandler,
+									},
+									dcl.Action{
+										Text:        "数据还原显示",
+										OnTriggered: pg.restoreContentActionHandler,
+									},
 								},
-								Model: pg.roleBaseDataModel,
-								OnSelectedIndexesChanged: func() {
-									fmt.Printf("SelectedIndexes: %v\n", pg.roleBaseDataTV.SelectedIndexes())
-								},
-								OnItemActivated: func() {
-									idx := pg.roleBaseDataTV.CurrentIndex()
-									pg.roleBaseDataModel.SwitchRowCheckedState(idx)
-								},
-								OnMouseDown: func(x, y int, button walk.MouseButton) {
-									if button != walk.RightButton {
-										return
-									}
+								Children: []dcl.Widget{
+									dcl.TableView{
+										AssignTo:         &pg.roleBaseDataTV,
+										ColumnSpan:       1,
+										CheckBoxes:       true,
+										ColumnsOrderable: true,
+										MultiSelection:   true,
+										Columns: []dcl.TableViewColumn{
+											{Title: "数据索引"},
+											{Title: "数据名称"},
+											{Title: "数据内容"},
+											{Title: "数据说明"},
+										},
+										Model: pg.roleBaseDataModel,
+										OnSelectedIndexesChanged: func() {
+											fmt.Printf("OnSelectedIndexesChanged: %v\n", pg.roleBaseDataTV.SelectedIndexes())
+										},
+										OnItemActivated: func() {
+											idx := pg.roleBaseDataTV.CurrentIndex()
+											pg.roleBaseDataModel.SwitchRowCheckedState(idx)
+										},
+										OnMouseDown: func(x, y int, button walk.MouseButton) {
+											// OnMouseDown函数会比OnSelectedIndexesChanged先执行，
+											// 所以CurrentIndex()会不准确
+											if button != walk.RightButton {
+												return
+											}
 
-									idx := pg.roleBaseDataTV.CurrentIndex()
-									fmt.Println(idx)
-
-									// 打开选项
-									//openAction := walk.NewAction()
-									//err = openAction.SetText("打开(&o)")
-									//if err != nil {
-									//	return
-									//}
-									//openAction.Triggered().Attach(pg.notifyIconOpenActionHandler)
-									//pg.roleBaseDataComposite.Layout().Container().ContextMenu().Actions().Add(openAction)
-									//if err != nil {
-									//	return
-									//}
+											//idx := pg.roleBaseDataTV.CurrentIndex()
+											//fmt.Printf("OnMouseDown: %d\n", idx)
+										},
+									},
 								},
 							},
 						},
@@ -480,5 +492,59 @@ func (pg *RoleBakPage) BakDecodeRoutineFunction(filePath string) {
 }
 
 func (pg *RoleBakPage) notifyIconOpenActionHandler() {
-	mw.Show()
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("notifyIconOpenActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	content := items[idx].Content
+
+	v, err := strconv.ParseInt(content, 10, 32)
+	if err != nil {
+		return
+	}
+
+	uv := uint32(v)
+	items[idx].Content = fmt.Sprintf("0x%X", uv)
+	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) timeStamp2timeActionHandler() {
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("timeStamp2timeActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	content := items[idx].Content
+
+	timeStamp, err := strconv.ParseInt(content, 10, 64)
+	if err != nil {
+		return
+	}
+
+	tm := time.Unix(timeStamp, 0)
+	t := tm.Format("2006-01-02 15:04:05")
+	items[idx].Content = t
+	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) restoreContentActionHandler() {
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("restoreContentActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	if items[idx].Content != items[idx].OriginContent {
+		items[idx].Content = items[idx].OriginContent
+	}
+	pg.roleBaseDataModel.PublishRowsReset()
 }
