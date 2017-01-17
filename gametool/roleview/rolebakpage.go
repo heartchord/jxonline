@@ -40,6 +40,7 @@ type RoleBakPage struct {
 	bakFileProcessLogText  *walk.TextEdit
 	bakFileCRC1            *walk.LineEdit
 	bakFileCRC2            *walk.LineEdit
+	encoder                *gameencoder.RoleBakEncoder
 	decodeProcessFinished  bool
 }
 
@@ -56,6 +57,9 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 	pg.tableModel = NewFileInfoModel()
 	pg.roleBaseDataModel = NewRoleBaseDataModel()
 	pg.decodeProcessFinished = true
+
+	pg.encoder = gameencoder.NewRoleBakEncoder()
+	pg.encoder.SetLogger(pg.WriteLog)
 
 	var ep walk.ErrorPresenter
 	tab := &dcl.TabPage{
@@ -292,7 +296,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "角色技能",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onDecodeROleBakData,
+								OnClicked:  pg.onShowRoleSkillDialog,
 							},
 							dcl.PushButton{
 								ColumnSpan: 1,
@@ -465,28 +469,26 @@ func (pg *RoleBakPage) BakDecodeRoutineFunction(filePath string) {
 	defer fi.Close()
 
 	data, err := ioutil.ReadAll(fi)
-	encoder := gameencoder.NewRoleBakEncoder()
-	encoder.SetLogger(pg.WriteLog)
-	encoder.Decode(data)
+	pg.encoder.Decode(data)
 
 	mdecoder := mahonia.NewDecoder("GBK")
 
-	roleName := string(encoder.BakData.RoleNameGBK)
+	roleName := string(pg.encoder.BakData.RoleNameGBK)
 	roleName = mdecoder.ConvertString(roleName)
-	roleNameLen := fmt.Sprintf("%d", encoder.BakData.RoleNameLen)
-	roleDataLen := fmt.Sprintf("%d", encoder.BakData.RoleDataLen)
+	roleNameLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleNameLen)
+	roleDataLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleDataLen)
 
 	pg.bakFileRoleNameText.SetText(roleName)
 	pg.bakFileRoleNameLenText.SetText(roleNameLen)
 	pg.bakFileRoleDataLenText.SetText(roleDataLen)
 
-	crc1 := fmt.Sprintf("%X", encoder.CRC32Cal)
+	crc1 := fmt.Sprintf("%X", pg.encoder.CRC32Cal)
 	pg.bakFileCRC1.SetText(crc1)
 
-	crc2 := fmt.Sprintf("%X", encoder.CRC32Read)
+	crc2 := fmt.Sprintf("%X", pg.encoder.CRC32Read)
 	pg.bakFileCRC2.SetText(crc2)
 
-	pg.roleBaseDataModel.ResetRows(&encoder.RoleBaseData)
+	pg.roleBaseDataModel.ResetRows(&pg.encoder.RoleBaseData)
 
 	//time.Sleep(time.Second * 3)
 }
@@ -547,4 +549,16 @@ func (pg *RoleBakPage) restoreContentActionHandler() {
 		items[idx].Content = items[idx].OriginContent
 	}
 	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) onShowRoleSkillDialog() {
+	if !roleSkillDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.FSkillData != nil {
+		roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
+	}
+
+	roleSkillDlg.Run()
 }

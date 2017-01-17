@@ -27,6 +27,7 @@ var mw = new(MyMainWindow)
 var roleBakPage = new(RoleBakPage)
 var roleDbPage = new(RoleDbPage)
 var bakBindData = new(BakFileInfoBindData)
+var roleSkillDlg = new(RoleSkillDialog)
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
