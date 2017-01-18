@@ -583,6 +583,8 @@ func (pg *RoleBakPage) onShowRoleExtDataDialog() {
 
 	roleExtDataDlg.RoleExtDataOfBaseModel.ResetRows(&pg.encoder.RoleExtData.Base)
 	roleExtDataDlg.RoleExtDataOfLingLongLockModel.ResetRows(&pg.encoder.RoleExtData.LingLongLock)
-
+	roleExtDataDlg.RoleExtDataOfTransNimbusModel.ResetRows(&pg.encoder.RoleExtData.TransNimbus)
+	roleExtDataDlg.RoleExtDataOfBreakModel.ResetRows(&pg.encoder.RoleExtData.Break)
+	roleExtDataDlg.RoleExtDataOfEquipComposeModel.ResetRows(&pg.encoder.RoleExtData.EquipCompose)
 	roleExtDataDlg.Run()
 }

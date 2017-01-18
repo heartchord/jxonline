@@ -14,12 +14,24 @@ type RoleExtDataDialog struct {
 
 	RoleExtDataOfLingLongLockModel *RoleExtDataOfLingLongLockModel
 	RoleExtDataOfLingLongLockTV    *walk.TableView
+
+	RoleExtDataOfTransNimbusModel *RoleExtDataOfTransNimbusModel
+	RoleExtDataOfTransNimbusTV    *walk.TableView
+
+	RoleExtDataOfBreakModel *RoleExtDataOfBreakModel
+	RoleExtDataOfBreakTV    *walk.TableView
+
+	RoleExtDataOfEquipComposeModel *RoleExtDataOfEquipComposeModel
+	RoleExtDataOfEquipComposeTV    *walk.TableView
 }
 
 // CreateInstance :
 func (dlg *RoleExtDataDialog) CreateInstance(parent walk.Form) bool {
 	dlg.RoleExtDataOfBaseModel = NewRoleExtDataOfBaseModel()
 	dlg.RoleExtDataOfLingLongLockModel = NewRoleExtDataOfLingLongLockModel()
+	dlg.RoleExtDataOfTransNimbusModel = NewRoleExtDataOfTransNimbusModel()
+	dlg.RoleExtDataOfBreakModel = NewRoleExtDataOfBreakModel()
+	dlg.RoleExtDataOfEquipComposeModel = NewRoleExtDataOfEquipComposeModel()
 	return dlg.CreateRoleExtDataDialog(parent)
 }
 
@@ -94,6 +106,102 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据说明"},
 								},
 								Model: dlg.RoleExtDataOfLingLongLockModel,
+								OnItemActivated: func() {
+									//	idx := pg.roleBaseDataTV.CurrentIndex()
+									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
+								},
+							},
+						},
+					},
+					dcl.Label{
+						ColumnSpan: 1,
+						Text:       "【角色转灵数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+					},
+					dcl.Label{
+						ColumnSpan: 1,
+						Text:       "【角色突破数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+					},
+					dcl.Composite{ // 这里重新布局
+						ColumnSpan: 1,
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
+						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
+						Children: []dcl.Widget{
+							dcl.TableView{
+								AssignTo:         &dlg.RoleExtDataOfTransNimbusTV,
+								ColumnSpan:       1,
+								CheckBoxes:       true,
+								ColumnsOrderable: true,
+								MultiSelection:   true,
+								Columns: []dcl.TableViewColumn{
+									{Title: "数据索引"},
+									{Title: "数据名称"},
+									{Title: "数据内容"},
+									{Title: "数据说明"},
+								},
+								Model: dlg.RoleExtDataOfTransNimbusModel,
+								OnItemActivated: func() {
+									//	idx := pg.roleBaseDataTV.CurrentIndex()
+									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
+								},
+							},
+						},
+					},
+
+					dcl.Composite{ // 这里重新布局
+						ColumnSpan: 1,
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
+						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
+						Children: []dcl.Widget{
+							dcl.TableView{
+								AssignTo:         &dlg.RoleExtDataOfBreakTV,
+								ColumnSpan:       1,
+								CheckBoxes:       true,
+								ColumnsOrderable: true,
+								MultiSelection:   true,
+								Columns: []dcl.TableViewColumn{
+									{Title: "数据索引"},
+									{Title: "数据名称"},
+									{Title: "数据内容"},
+									{Title: "数据说明"},
+								},
+								Model: dlg.RoleExtDataOfBreakModel,
+								OnItemActivated: func() {
+									//	idx := pg.roleBaseDataTV.CurrentIndex()
+									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
+								},
+							},
+						},
+					},
+					dcl.Label{
+						ColumnSpan: 1,
+						Text:       "【角色锻造数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+					},
+					dcl.Label{
+						ColumnSpan: 1,
+						Text:       "【角色门客数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+					},
+					dcl.Composite{ // 这里重新布局
+						ColumnSpan: 1,
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
+						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
+						Children: []dcl.Widget{
+							dcl.TableView{
+								AssignTo:         &dlg.RoleExtDataOfEquipComposeTV,
+								ColumnSpan:       1,
+								CheckBoxes:       true,
+								ColumnsOrderable: true,
+								MultiSelection:   true,
+								Columns: []dcl.TableViewColumn{
+									{Title: "数据索引"},
+									{Title: "数据名称"},
+									{Title: "数据内容"},
+									{Title: "数据说明"},
+								},
+								Model: dlg.RoleExtDataOfEquipComposeModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)

@@ -378,21 +378,21 @@ type RoleExtDataOfHangerOn struct {
 
 // RoleExtDataOfTransNimbus :
 type RoleExtDataOfTransNimbus struct {
-	TransNimbusExpHigh int16 // 转灵经验(高位)
-	TransNimbusExpLow  int32 // 转灵经验(低位)
+	TransNimbusExpHigh int16 "转灵经验(高位)"
+	TransNimbusExpLow  int32 "转灵经验(低位)"
 }
 
 // RoleExtDataOfBreak ：
 type RoleExtDataOfBreak struct {
-	HasBreak byte // 200突破，0表示没突破
+	HasBreak byte "200突破，0表示没突破"
 }
 
 // RoleExtDataOfEquipCompose ：
 type RoleExtDataOfEquipCompose struct {
-	ComposeLv    uint32 // 合成等级
-	ComposeExp   uint32 // 合成经验
-	DecomposeLv  uint32 // 分解等级
-	DecomposeExp uint32 // 分解经验
+	ComposeLv    uint32 "合成等级"
+	ComposeExp   uint32 "合成经验"
+	DecomposeLv  uint32 "分解等级"
+	DecomposeExp uint32 "分解经验"
 }
 
 // RoleExtData :
