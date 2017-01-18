@@ -5,43 +5,51 @@ import (
 	dcl "github.com/lxn/walk/declarative"
 )
 
-// RoleSkillDialog :
-type RoleSkillDialog struct {
+// RoleExtDataDialog :
+type RoleExtDataDialog struct {
 	*walk.Dialog
 
-	RoleFSkillDataModel *RoleSkillDataModel
-	RoleLSkillDataModel *RoleSkillDataModel
-	RoleFSkillDataTV    *walk.TableView
-	RoleLSkillDataTV    *walk.TableView
+	RoleExtDataOfBaseModel *RoleExtDataOfBaseModel
+	RoleExtDataOfBaseTV    *walk.TableView
+
+	RoleExtDataOfLingLongLockModel *RoleExtDataOfLingLongLockModel
+	RoleExtDataOfLingLongLockTV    *walk.TableView
 }
 
 // CreateInstance :
-func (dlg *RoleSkillDialog) CreateInstance(parent walk.Form) bool {
-	dlg.RoleFSkillDataModel = NewRoleSkillDataModel()
-	dlg.RoleLSkillDataModel = NewRoleSkillDataModel()
-	return dlg.CreateRoleSkillDialog(parent)
+func (dlg *RoleExtDataDialog) CreateInstance(parent walk.Form) bool {
+	dlg.RoleExtDataOfBaseModel = NewRoleExtDataOfBaseModel()
+	dlg.RoleExtDataOfLingLongLockModel = NewRoleExtDataOfLingLongLockModel()
+	return dlg.CreateRoleExtDataDialog(parent)
 }
 
-// CreateRoleSkillDialog :
-func (dlg *RoleSkillDialog) CreateRoleSkillDialog(parent walk.Form) bool {
+// CreateRoleExtDataDialog :
+func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 	var acceptPB, cancelPB *walk.PushButton
 
 	o := &dcl.Dialog{
 		AssignTo:      &dlg.Dialog,
-		Title:         "角色技能数据信息",
+		Title:         "角色扩展数据信息",
 		DefaultButton: &acceptPB,
 		CancelButton:  &cancelPB,
 		MinSize:       dcl.Size{Width: 1000, Height: 750},
 		Font:          dcl.Font{Family: "微软雅黑", PointSize: 10},
 		Layout:        dcl.VBox{},
 		Children: []dcl.Widget{
-			dcl.Composite{
-				Layout: dcl.Grid{Columns: 1, Spacing: 10},
+			dcl.Composite{ // 这里重新布局
+				MinSize: dcl.Size{Width: 0, Height: 400},
+				Font:    dcl.Font{Family: "微软雅黑", PointSize: 10},
+				Layout:  dcl.Grid{Columns: 2, Spacing: 10},
 				Children: []dcl.Widget{
 					dcl.Label{
 						ColumnSpan: 1,
-						Text:       "【战斗技能】",
-						Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
+						Text:       "【角色锁魂数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
+					},
+					dcl.Label{
+						ColumnSpan: 1,
+						Text:       "【角色玲珑锁数据信息】",
+						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10, Bold: true},
 					},
 					dcl.Composite{ // 这里重新布局
 						ColumnSpan: 1,
@@ -49,52 +57,46 @@ func (dlg *RoleSkillDialog) CreateRoleSkillDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleFSkillDataTV,
+								AssignTo:         &dlg.RoleExtDataOfBaseTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
 								MultiSelection:   true,
-								MinSize:          dcl.Size{Width: 0, Height: 300},
 								Columns: []dcl.TableViewColumn{
 									{Title: "数据索引"},
-									{Title: "技能索引"},
-									{Title: "技能等级"},
-									{Title: "技能经验"},
+									{Title: "数据名称"},
+									{Title: "数据内容"},
+									{Title: "数据说明"},
 								},
-								Model: dlg.RoleFSkillDataModel,
+								Model: dlg.RoleExtDataOfBaseModel,
 								OnItemActivated: func() {
-									idx := dlg.RoleFSkillDataTV.CurrentIndex()
-									dlg.RoleFSkillDataModel.SwitchRowCheckedState(idx)
+									//	idx := pg.roleBaseDataTV.CurrentIndex()
+									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
 								},
 							},
 						},
 					},
-					dcl.Label{
-						ColumnSpan: 1,
-						Text:       "【生活技能】",
-						Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
-					},
 					dcl.Composite{ // 这里重新布局
 						ColumnSpan: 1,
 						Font:       dcl.Font{Family: "微软雅黑", PointSize: 10},
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleLSkillDataTV,
+								AssignTo:         &dlg.RoleExtDataOfLingLongLockTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
 								MultiSelection:   true,
 								Columns: []dcl.TableViewColumn{
 									{Title: "数据索引"},
-									{Title: "技能索引"},
-									{Title: "技能等级"},
-									{Title: "技能经验"},
+									{Title: "数据名称"},
+									{Title: "数据内容"},
+									{Title: "数据说明"},
 								},
-								Model: dlg.RoleLSkillDataModel,
+								Model: dlg.RoleExtDataOfLingLongLockModel,
 								OnItemActivated: func() {
-									idx := dlg.RoleLSkillDataTV.CurrentIndex()
-									dlg.RoleLSkillDataModel.SwitchRowCheckedState(idx)
+									//	idx := pg.roleBaseDataTV.CurrentIndex()
+									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
 								},
 							},
 						},

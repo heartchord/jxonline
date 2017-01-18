@@ -302,7 +302,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "任务变量",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onDecodeROleBakData,
+								OnClicked:  pg.onShowRoleTaskDialog,
 							},
 							dcl.PushButton{
 								ColumnSpan: 1,
@@ -320,7 +320,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "扩展数据",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onDecodeROleBakData,
+								OnClicked:  pg.onShowRoleExtDataDialog,
 							},
 						},
 					},
@@ -558,7 +558,31 @@ func (pg *RoleBakPage) onShowRoleSkillDialog() {
 
 	if pg.encoder.FSkillData != nil {
 		roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
+		roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
 	}
 
 	roleSkillDlg.Run()
+}
+
+func (pg *RoleBakPage) onShowRoleTaskDialog() {
+	if !roleTaskDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.TaskData != nil {
+		roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
+	}
+
+	roleTaskDlg.Run()
+}
+
+func (pg *RoleBakPage) onShowRoleExtDataDialog() {
+	if !roleExtDataDlg.CreateInstance(mw) {
+		return
+	}
+
+	roleExtDataDlg.RoleExtDataOfBaseModel.ResetRows(&pg.encoder.RoleExtData.Base)
+	roleExtDataDlg.RoleExtDataOfLingLongLockModel.ResetRows(&pg.encoder.RoleExtData.LingLongLock)
+
+	roleExtDataDlg.Run()
 }

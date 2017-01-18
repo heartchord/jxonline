@@ -28,6 +28,8 @@ var roleBakPage = new(RoleBakPage)
 var roleDbPage = new(RoleDbPage)
 var bakBindData = new(BakFileInfoBindData)
 var roleSkillDlg = new(RoleSkillDialog)
+var roleTaskDlg = new(RoleTaskDialog)
+var roleExtDataDlg = new(RoleExtDataDialog)
 
 func main() {
 	rand.Seed(time.Now().UnixNano())

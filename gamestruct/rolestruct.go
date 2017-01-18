@@ -341,25 +341,25 @@ type StateData struct {
 
 // RoleExtDataOfBase ：
 type RoleExtDataOfBase struct {
-	RoleNameGUID        int64  // 角色GUID
-	Password            uint32 // 绑定或锁魂操作的密码（两者共一个密码）
-	PasswordExpiredTime uint32 // 绑定或锁魂操作解除密码日期
-	PasswordTimeOrTimes uint32 // 输入密码错误次数或密码错误解禁日期
-	HavePassword        byte   // 绑定或锁魂是否设置了密码
+	RoleNameGUID        int64  "角色GUID"
+	Password            uint32 "绑定或锁魂操作的密码（两者共一个密码）"
+	PasswordExpiredTime uint32 "绑定或锁魂操作解除密码日期"
+	PasswordTimeOrTimes uint32 "输入密码错误次数或密码错误解禁日期"
+	HavePassword        byte   "绑定或锁魂是否设置了密码"
 }
 
 // RoleExtDataOfLingLongLockParam ;
 type RoleExtDataOfLingLongLockParam struct {
-	CardHash uint32 // 网卡硬件地址哈希码
-	DiskHash uint32 // 硬盘序列号哈希码
+	CardHash uint32 "网卡硬件地址哈希码"
+	DiskHash uint32 "硬盘序列号哈希码"
 }
 
 // RoleExtDataOfLingLongLock :
 type RoleExtDataOfLingLongLock struct {
 	RoleExtDataOfLingLongLockParam
-	Password uint32 // 玲珑锁密码
-	Timeout  uint32 // 到期时间，非0表示玲珑锁有效
-	Locked   byte   // 是否锁定（跨服时此状态保持不变，登录时重新设置）
+	Password uint32 "玲珑锁密码"
+	Timeout  uint32 "到期时间，非0表示玲珑锁有效"
+	Locked   byte   "是否锁定（跨服时此状态保持不变，登录时重新设置）"
 }
 
 // RoleExtDataOfHangerOnData :
