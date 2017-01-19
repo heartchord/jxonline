@@ -9,29 +9,26 @@ import (
 type RoleExtDataDialog struct {
 	*walk.Dialog
 
-	RoleExtDataOfBaseModel *RoleExtDataOfBaseModel
-	RoleExtDataOfBaseTV    *walk.TableView
-
-	RoleExtDataOfLingLongLockModel *RoleExtDataOfLingLongLockModel
-	RoleExtDataOfLingLongLockTV    *walk.TableView
-
-	RoleExtDataOfTransNimbusModel *RoleExtDataOfTransNimbusModel
-	RoleExtDataOfTransNimbusTV    *walk.TableView
-
-	RoleExtDataOfBreakModel *RoleExtDataOfBreakModel
-	RoleExtDataOfBreakTV    *walk.TableView
-
-	RoleExtDataOfEquipComposeModel *RoleExtDataOfEquipComposeModel
-	RoleExtDataOfEquipComposeTV    *walk.TableView
+	LockSoulDataModel     *DataModel1
+	LingLongLockDataModel *DataModel1
+	TransNimbusDataModel  *DataModel1
+	RoleBreakDataModel    *DataModel1
+	EquipComposeDataModel *DataModel1
+	LockSoulDataTV        *walk.TableView
+	LingLongLockDataTV    *walk.TableView
+	TransNimbusDataTV     *walk.TableView
+	RoleBreakDataTV       *walk.TableView
+	EquipComposeDataTV    *walk.TableView
 }
 
 // CreateInstance :
 func (dlg *RoleExtDataDialog) CreateInstance(parent walk.Form) bool {
-	dlg.RoleExtDataOfBaseModel = NewRoleExtDataOfBaseModel()
-	dlg.RoleExtDataOfLingLongLockModel = NewRoleExtDataOfLingLongLockModel()
-	dlg.RoleExtDataOfTransNimbusModel = NewRoleExtDataOfTransNimbusModel()
-	dlg.RoleExtDataOfBreakModel = NewRoleExtDataOfBreakModel()
-	dlg.RoleExtDataOfEquipComposeModel = NewRoleExtDataOfEquipComposeModel()
+	dlg.LockSoulDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
+	dlg.LingLongLockDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
+	dlg.TransNimbusDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
+	dlg.RoleBreakDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
+	dlg.EquipComposeDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
+
 	return dlg.CreateRoleExtDataDialog(parent)
 }
 
@@ -69,7 +66,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleExtDataOfBaseTV,
+								AssignTo:         &dlg.LockSoulDataTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
@@ -80,7 +77,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据内容"},
 									{Title: "数据说明"},
 								},
-								Model: dlg.RoleExtDataOfBaseModel,
+								Model: dlg.LockSoulDataModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
@@ -94,7 +91,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleExtDataOfLingLongLockTV,
+								AssignTo:         &dlg.LingLongLockDataTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
@@ -105,7 +102,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据内容"},
 									{Title: "数据说明"},
 								},
-								Model: dlg.RoleExtDataOfLingLongLockModel,
+								Model: dlg.LingLongLockDataModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
@@ -129,7 +126,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleExtDataOfTransNimbusTV,
+								AssignTo:         &dlg.TransNimbusDataTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
@@ -140,7 +137,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据内容"},
 									{Title: "数据说明"},
 								},
-								Model: dlg.RoleExtDataOfTransNimbusModel,
+								Model: dlg.TransNimbusDataModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
@@ -155,7 +152,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleExtDataOfBreakTV,
+								AssignTo:         &dlg.RoleBreakDataTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
@@ -166,7 +163,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据内容"},
 									{Title: "数据说明"},
 								},
-								Model: dlg.RoleExtDataOfBreakModel,
+								Model: dlg.RoleBreakDataModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)
@@ -190,7 +187,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 						Layout:     dcl.Grid{Columns: 1, Spacing: 10},
 						Children: []dcl.Widget{
 							dcl.TableView{
-								AssignTo:         &dlg.RoleExtDataOfEquipComposeTV,
+								AssignTo:         &dlg.EquipComposeDataTV,
 								ColumnSpan:       1,
 								CheckBoxes:       true,
 								ColumnsOrderable: true,
@@ -201,7 +198,7 @@ func (dlg *RoleExtDataDialog) CreateRoleExtDataDialog(parent walk.Form) bool {
 									{Title: "数据内容"},
 									{Title: "数据说明"},
 								},
-								Model: dlg.RoleExtDataOfEquipComposeModel,
+								Model: dlg.EquipComposeDataModel,
 								OnItemActivated: func() {
 									//	idx := pg.roleBaseDataTV.CurrentIndex()
 									//	pg.roleBaseDataModel.SwitchRowCheckedState(idx)

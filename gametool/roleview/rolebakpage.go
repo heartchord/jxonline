@@ -31,7 +31,7 @@ type RoleBakPage struct {
 	roleBaseDataTV         *walk.TableView
 	treeModel              *DirectoryTreeModel
 	tableModel             *FileInfoModel
-	roleBaseDataModel      *RoleBaseDataModel
+	roleBaseDataModel      *DataModel1
 	roleBaseDataComposite  *walk.Composite
 	bakFilePathText        *walk.LineEdit
 	bakFileRoleNameLenText *walk.LineEdit
@@ -55,7 +55,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 
 	// create FileInfoModel
 	pg.tableModel = NewFileInfoModel()
-	pg.roleBaseDataModel = NewRoleBaseDataModel()
+	pg.roleBaseDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
 	pg.decodeProcessFinished = true
 
 	pg.encoder = gameencoder.NewRoleBakEncoder()
@@ -488,7 +488,7 @@ func (pg *RoleBakPage) BakDecodeRoutineFunction(filePath string) {
 	crc2 := fmt.Sprintf("%X", pg.encoder.CRC32Read)
 	pg.bakFileCRC2.SetText(crc2)
 
-	pg.roleBaseDataModel.ResetRows(&pg.encoder.RoleBaseData)
+	pg.roleBaseDataModel.ResetRows(pg.encoder.RoleBaseData)
 
 	//time.Sleep(time.Second * 3)
 }
@@ -581,10 +581,11 @@ func (pg *RoleBakPage) onShowRoleExtDataDialog() {
 		return
 	}
 
-	roleExtDataDlg.RoleExtDataOfBaseModel.ResetRows(&pg.encoder.RoleExtData.Base)
-	roleExtDataDlg.RoleExtDataOfLingLongLockModel.ResetRows(&pg.encoder.RoleExtData.LingLongLock)
-	roleExtDataDlg.RoleExtDataOfTransNimbusModel.ResetRows(&pg.encoder.RoleExtData.TransNimbus)
-	roleExtDataDlg.RoleExtDataOfBreakModel.ResetRows(&pg.encoder.RoleExtData.Break)
-	roleExtDataDlg.RoleExtDataOfEquipComposeModel.ResetRows(&pg.encoder.RoleExtData.EquipCompose)
+	roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
+	roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
+	roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
+	roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
+	roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+
 	roleExtDataDlg.Run()
 }
