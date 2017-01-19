@@ -12,6 +12,10 @@ type RoleDbPage struct {
 
 // Create is
 func (pg *RoleDbPage) Create() *dcl.TabPage {
+	return pg.createPage()
+}
+
+func (pg *RoleDbPage) createPage() *dcl.TabPage {
 	return &dcl.TabPage{
 		AssignTo: &pg.TabPage,
 		Title:    "Role DB",

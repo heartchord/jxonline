@@ -68,11 +68,274 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 	pg.roleExtDataDlg = new(RoleExtDataDialog)
 	pg.roleSkillDlg = new(RoleSkillDialog)
 	pg.roleTaskDlg = new(RoleTaskDialog)
-
 	pg.bakBindData = new(BakFileInfoBindData)
 
+	return pg.createPage()
+}
+
+// Tree View Event Handler
+func (pg *RoleBakPage) onCurrentTreeViewItemChanged() {
+	dir := pg.treeView.CurrentItem().(*DirectoryNode)
+	err := pg.tableModel.SetDirPath(dir.Path())
+	if err != nil {
+		walk.MsgBox(mw, "Error", err.Error(),
+			walk.MsgBoxOK|walk.MsgBoxIconError)
+	}
+}
+
+func (pg *RoleBakPage) onCurrentTreeViewSizeChanged() {
+}
+
+// Table View Event Handler
+func (pg *RoleBakPage) onCurrentTableViewItemChanged() {
+	var url string
+	if index := pg.tableView.CurrentIndex(); index > -1 {
+		name := pg.tableModel.items[index].Name
+		dir := pg.treeView.CurrentItem().(*DirectoryNode)
+		url = filepath.Join(dir.Path(), name)
+		pg.bakFilePathText.SetText(url)
+	}
+}
+
+func (pg *RoleBakPage) onCurrentTableViewItemActivated() {
+
+	tlvIndex := pg.tableView.CurrentIndex()
+	if tlvIndex <= -1 {
+		return
+	}
+
+	curItem := pg.treeView.CurrentItem()
+	curNode := curItem.(*DirectoryNode)
+
+	name := pg.tableModel.items[tlvIndex].Name
+	trvIndex := curNode.FindChild(name)
+	if trvIndex <= -1 {
+		return
+	}
+
+	path := filepath.Join(curNode.Path(), name)
+	if !goblazer.IsFileDirectory(path) { // 如果不是目录，返回
+		return
+	}
+
+	// 更新目录树
+	pg.treeView.SetExpanded(curItem, true)
+	child := curNode.ChildAt(trvIndex)
+	pg.treeView.SetCurrentItem(child)
+
+	err := pg.tableModel.SetDirPath(path)
+	if err != nil {
+		walk.MsgBox(mw, "Error", err.Error(),
+			walk.MsgBoxOK|walk.MsgBoxIconError)
+	}
+}
+
+func (pg *RoleBakPage) onCurrentTableViewKeyDown(key walk.Key) {
+
+	switch key {
+	case walk.KeyBack:
+		{
+			curItem := pg.treeView.CurrentItem()
+			if curItem == nil {
+				return
+			}
+
+			parentItem := curItem.Parent()
+			if parentItem == nil {
+				return
+			}
+			parentNode := parentItem.(*DirectoryNode)
+
+			// 更新目录树
+			pg.treeView.SetExpanded(parentItem, true)
+			pg.treeView.SetExpanded(curItem, false)
+			pg.treeView.SetCurrentItem(parentItem)
+
+			err := pg.tableModel.SetDirPath(parentNode.Path())
+			if err != nil {
+				walk.MsgBox(mw, "Error", err.Error(),
+					walk.MsgBoxOK|walk.MsgBoxIconError)
+			}
+		}
+	}
+}
+
+func (pg *RoleBakPage) onDecodeROleBakData() {
+	if !pg.decodeProcessFinished {
+		pg.WriteLog("Info - Last decode process hasn't finished, please wait...")
+		return
+	}
+
+	pg.decodeProcessFinished = false
+	pg.bakFileProcessLogText.SetText("")
+	go pg.BakDecodeRoutineFunction(pg.bakBindData.BakFilePath)
+}
+
+// WriteLog :
+func (pg *RoleBakPage) WriteLog(format string, a ...interface{}) (n int, err error) {
+	ts := time.Now().Unix()
+	tm := time.Unix(ts, 0)
+	t := tm.Format("2006-01-02 15:04:05")
+
+	format = t + " : " + format + "\r\n"
+	log := fmt.Sprintf(format, a...)
+	pg.bakFileProcessLogText.AppendText(log)
+	return pg.bakFileProcessLogText.TextLength(), nil
+}
+
+// BakDecodeRoutineFunction :
+func (pg *RoleBakPage) BakDecodeRoutineFunction(filePath string) {
+	defer func() {
+		pg.decodeProcessFinished = true
+	}()
+
+	// 文件存在性判断
+	if !goblazer.IsFileExisted(filePath) {
+		pg.WriteLog("Error - File not existed, the input path is [%s]!", filePath)
+		return
+	}
+
+	// 文件后缀名判断
+	fileName := path.Base(filePath)
+	fileSuffix := path.Ext(fileName)
+	if fileSuffix != ".bak" {
+		pg.WriteLog("Error - Not role bak file!")
+		return
+	}
+
+	fi, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer fi.Close()
+
+	data, err := ioutil.ReadAll(fi)
+	pg.encoder.Decode(data)
+
+	mdecoder := mahonia.NewDecoder("GBK")
+
+	roleName := string(pg.encoder.BakData.RoleNameGBK)
+	roleName = mdecoder.ConvertString(roleName)
+	roleNameLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleNameLen)
+	roleDataLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleDataLen)
+
+	pg.bakFileRoleNameText.SetText(roleName)
+	pg.bakFileRoleNameLenText.SetText(roleNameLen)
+	pg.bakFileRoleDataLenText.SetText(roleDataLen)
+
+	crc1 := fmt.Sprintf("%X", pg.encoder.CRC32Cal)
+	pg.bakFileCRC1.SetText(crc1)
+
+	crc2 := fmt.Sprintf("%X", pg.encoder.CRC32Read)
+	pg.bakFileCRC2.SetText(crc2)
+
+	pg.roleBaseDataModel.ResetRows(pg.encoder.RoleBaseData)
+
+	//time.Sleep(time.Second * 3)
+}
+
+func (pg *RoleBakPage) notifyIconOpenActionHandler() {
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("notifyIconOpenActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	content := items[idx].Content
+
+	v, err := strconv.ParseInt(content, 10, 32)
+	if err != nil {
+		return
+	}
+
+	uv := uint32(v)
+	items[idx].Content = fmt.Sprintf("0x%X", uv)
+	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) timeStamp2timeActionHandler() {
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("timeStamp2timeActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	content := items[idx].Content
+
+	timeStamp, err := strconv.ParseInt(content, 10, 64)
+	if err != nil {
+		return
+	}
+
+	tm := time.Unix(timeStamp, 0)
+	t := tm.Format("2006-01-02 15:04:05")
+	items[idx].Content = t
+	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) restoreContentActionHandler() {
+	idx := pg.roleBaseDataTV.CurrentIndex()
+	if idx < 0 {
+		return
+	}
+
+	fmt.Printf("restoreContentActionHandler: %d\n", idx)
+
+	items := pg.roleBaseDataModel.Items()
+	if items[idx].Content != items[idx].OriginContent {
+		items[idx].Content = items[idx].OriginContent
+	}
+	pg.roleBaseDataModel.PublishRowsReset()
+}
+
+func (pg *RoleBakPage) onShowRoleSkillDialog() {
+	if !pg.roleSkillDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.FSkillData != nil {
+		pg.roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
+		pg.roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
+	}
+
+	pg.roleSkillDlg.Run()
+}
+
+func (pg *RoleBakPage) onShowRoleTaskDialog() {
+	if !pg.roleTaskDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.TaskData != nil {
+		pg.roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
+	}
+
+	pg.roleTaskDlg.Run()
+}
+
+func (pg *RoleBakPage) onShowRoleExtDataDialog() {
+	if !pg.roleExtDataDlg.CreateInstance(mw) {
+		return
+	}
+
+	pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
+	pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
+	pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
+	pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
+	pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+
+	pg.roleExtDataDlg.Run()
+}
+
+// createPage : 页面布局函数
+func (pg *RoleBakPage) createPage() *dcl.TabPage {
 	var ep walk.ErrorPresenter
-	tab := &dcl.TabPage{
+
+	return &dcl.TabPage{
 		AssignTo: &pg.TabPage,
 		Title:    "Role Bak",
 		Layout:   dcl.HBox{},
@@ -338,264 +601,4 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 			},
 		},
 	}
-
-	return tab
-}
-
-// Tree View Event Handler
-func (pg *RoleBakPage) onCurrentTreeViewItemChanged() {
-	dir := pg.treeView.CurrentItem().(*DirectoryNode)
-	err := pg.tableModel.SetDirPath(dir.Path())
-	if err != nil {
-		walk.MsgBox(mw, "Error", err.Error(),
-			walk.MsgBoxOK|walk.MsgBoxIconError)
-	}
-}
-
-func (pg *RoleBakPage) onCurrentTreeViewSizeChanged() {
-}
-
-// Table View Event Handler
-func (pg *RoleBakPage) onCurrentTableViewItemChanged() {
-	var url string
-	if index := pg.tableView.CurrentIndex(); index > -1 {
-		name := pg.tableModel.items[index].Name
-		dir := pg.treeView.CurrentItem().(*DirectoryNode)
-		url = filepath.Join(dir.Path(), name)
-		pg.bakFilePathText.SetText(url)
-	}
-}
-
-func (pg *RoleBakPage) onCurrentTableViewItemActivated() {
-
-	tlvIndex := pg.tableView.CurrentIndex()
-	if tlvIndex <= -1 {
-		return
-	}
-
-	curItem := pg.treeView.CurrentItem()
-	curNode := curItem.(*DirectoryNode)
-
-	name := pg.tableModel.items[tlvIndex].Name
-	trvIndex := curNode.FindChild(name)
-	if trvIndex <= -1 {
-		return
-	}
-
-	path := filepath.Join(curNode.Path(), name)
-	if !goblazer.IsFileDirectory(path) { // 如果不是目录，返回
-		return
-	}
-
-	// 更新目录树
-	pg.treeView.SetExpanded(curItem, true)
-	child := curNode.ChildAt(trvIndex)
-	pg.treeView.SetCurrentItem(child)
-
-	err := pg.tableModel.SetDirPath(path)
-	if err != nil {
-		walk.MsgBox(mw, "Error", err.Error(),
-			walk.MsgBoxOK|walk.MsgBoxIconError)
-	}
-}
-
-func (pg *RoleBakPage) onCurrentTableViewKeyDown(key walk.Key) {
-
-	switch key {
-	case walk.KeyBack:
-		{
-			curItem := pg.treeView.CurrentItem()
-			if curItem == nil {
-				return
-			}
-
-			parentItem := curItem.Parent()
-			if parentItem == nil {
-				return
-			}
-			parentNode := parentItem.(*DirectoryNode)
-
-			// 更新目录树
-			pg.treeView.SetExpanded(parentItem, true)
-			pg.treeView.SetExpanded(curItem, false)
-			pg.treeView.SetCurrentItem(parentItem)
-
-			err := pg.tableModel.SetDirPath(parentNode.Path())
-			if err != nil {
-				walk.MsgBox(mw, "Error", err.Error(),
-					walk.MsgBoxOK|walk.MsgBoxIconError)
-			}
-		}
-	}
-}
-
-func (pg *RoleBakPage) onDecodeROleBakData() {
-	if !pg.decodeProcessFinished {
-		pg.WriteLog("Info - Last decode process hasn't finished, please wait...")
-		return
-	}
-
-	pg.decodeProcessFinished = false
-	pg.bakFileProcessLogText.SetText("")
-	go pg.BakDecodeRoutineFunction(pg.bakBindData.BakFilePath)
-}
-
-// WriteLog :
-func (pg *RoleBakPage) WriteLog(format string, a ...interface{}) (n int, err error) {
-	ts := time.Now().Unix()
-	tm := time.Unix(ts, 0)
-	t := tm.Format("2006-01-02 15:04:05")
-
-	format = t + " : " + format + "\r\n"
-	log := fmt.Sprintf(format, a...)
-	pg.bakFileProcessLogText.AppendText(log)
-	return pg.bakFileProcessLogText.TextLength(), nil
-}
-
-// BakDecodeRoutineFunction :
-func (pg *RoleBakPage) BakDecodeRoutineFunction(filePath string) {
-	defer func() {
-		pg.decodeProcessFinished = true
-	}()
-
-	// 文件存在性判断
-	if !goblazer.IsFileExisted(filePath) {
-		pg.WriteLog("Error - File not existed, the input path is [%s]!", filePath)
-		return
-	}
-
-	// 文件后缀名判断
-	fileName := path.Base(filePath)
-	fileSuffix := path.Ext(fileName)
-	if fileSuffix != ".bak" {
-		pg.WriteLog("Error - Not role bak file!")
-		return
-	}
-
-	fi, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-	defer fi.Close()
-
-	data, err := ioutil.ReadAll(fi)
-	pg.encoder.Decode(data)
-
-	mdecoder := mahonia.NewDecoder("GBK")
-
-	roleName := string(pg.encoder.BakData.RoleNameGBK)
-	roleName = mdecoder.ConvertString(roleName)
-	roleNameLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleNameLen)
-	roleDataLen := fmt.Sprintf("%d", pg.encoder.BakData.RoleDataLen)
-
-	pg.bakFileRoleNameText.SetText(roleName)
-	pg.bakFileRoleNameLenText.SetText(roleNameLen)
-	pg.bakFileRoleDataLenText.SetText(roleDataLen)
-
-	crc1 := fmt.Sprintf("%X", pg.encoder.CRC32Cal)
-	pg.bakFileCRC1.SetText(crc1)
-
-	crc2 := fmt.Sprintf("%X", pg.encoder.CRC32Read)
-	pg.bakFileCRC2.SetText(crc2)
-
-	pg.roleBaseDataModel.ResetRows(pg.encoder.RoleBaseData)
-
-	//time.Sleep(time.Second * 3)
-}
-
-func (pg *RoleBakPage) notifyIconOpenActionHandler() {
-	idx := pg.roleBaseDataTV.CurrentIndex()
-	if idx < 0 {
-		return
-	}
-
-	fmt.Printf("notifyIconOpenActionHandler: %d\n", idx)
-
-	items := pg.roleBaseDataModel.Items()
-	content := items[idx].Content
-
-	v, err := strconv.ParseInt(content, 10, 32)
-	if err != nil {
-		return
-	}
-
-	uv := uint32(v)
-	items[idx].Content = fmt.Sprintf("0x%X", uv)
-	pg.roleBaseDataModel.PublishRowsReset()
-}
-
-func (pg *RoleBakPage) timeStamp2timeActionHandler() {
-	idx := pg.roleBaseDataTV.CurrentIndex()
-	if idx < 0 {
-		return
-	}
-
-	fmt.Printf("timeStamp2timeActionHandler: %d\n", idx)
-
-	items := pg.roleBaseDataModel.Items()
-	content := items[idx].Content
-
-	timeStamp, err := strconv.ParseInt(content, 10, 64)
-	if err != nil {
-		return
-	}
-
-	tm := time.Unix(timeStamp, 0)
-	t := tm.Format("2006-01-02 15:04:05")
-	items[idx].Content = t
-	pg.roleBaseDataModel.PublishRowsReset()
-}
-
-func (pg *RoleBakPage) restoreContentActionHandler() {
-	idx := pg.roleBaseDataTV.CurrentIndex()
-	if idx < 0 {
-		return
-	}
-
-	fmt.Printf("restoreContentActionHandler: %d\n", idx)
-
-	items := pg.roleBaseDataModel.Items()
-	if items[idx].Content != items[idx].OriginContent {
-		items[idx].Content = items[idx].OriginContent
-	}
-	pg.roleBaseDataModel.PublishRowsReset()
-}
-
-func (pg *RoleBakPage) onShowRoleSkillDialog() {
-	if !pg.roleSkillDlg.CreateInstance(mw) {
-		return
-	}
-
-	if pg.encoder.FSkillData != nil {
-		pg.roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
-		pg.roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
-	}
-
-	pg.roleSkillDlg.Run()
-}
-
-func (pg *RoleBakPage) onShowRoleTaskDialog() {
-	if !pg.roleTaskDlg.CreateInstance(mw) {
-		return
-	}
-
-	if pg.encoder.TaskData != nil {
-		pg.roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
-	}
-
-	pg.roleTaskDlg.Run()
-}
-
-func (pg *RoleBakPage) onShowRoleExtDataDialog() {
-	if !pg.roleExtDataDlg.CreateInstance(mw) {
-		return
-	}
-
-	pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
-	pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
-	pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
-	pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
-	pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
-
-	pg.roleExtDataDlg.Run()
 }

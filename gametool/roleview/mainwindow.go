@@ -32,118 +32,12 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	dcl.MustRegisterCondition("isSpecialMode", isSpecialMode)
 
-	var openAction, showAboutBoxAction *walk.Action
-	var recentMenu *walk.Menu
-
 	mw.roleBakPage = new(RoleBakPage)
 	mw.roleDbPage = new(RoleDbPage)
 
-	if err := (dcl.MainWindow{
-		AssignTo: &mw.MainWindow,
-		Title:    "角色存档信息查看工具",
-		MenuItems: []dcl.MenuItem{
-			dcl.Menu{
-				// &符号：Alt快捷键，快捷键即&后面字符
-				Text: "文件(&F)",
-				Items: []dcl.MenuItem{
-					dcl.Action{
-						AssignTo: &openAction,
-						Text:     "Open",
-						Image:    "../../gameresource/img/open.png",
-						// Shortcut字段：设置Action的快捷键
-						Shortcut:    dcl.Shortcut{Modifiers: walk.ModControl, Key: walk.KeyO},
-						OnTriggered: mw.openActionTriggered,
-					},
-					dcl.Menu{
-						AssignTo: &recentMenu,
-						Text:     "Recent",
-					},
-					dcl.Separator{},
-					dcl.Action{
-						Text:        "Exit",
-						OnTriggered: func() { mw.Close() },
-					},
-				},
-			},
-			dcl.Menu{
-				Text: "帮助(&H)",
-				Items: []dcl.MenuItem{
-					dcl.Action{
-						AssignTo:    &showAboutBoxAction,
-						Text:        "About",
-						OnTriggered: mw.showAboutBoxActionTriggered,
-					},
-				},
-			},
-		},
-
-		ToolBar: dcl.ToolBar{
-			ButtonStyle: dcl.ToolBarButtonImageBeforeText,
-			Items: []dcl.MenuItem{
-				//dcl.ActionRef{Action: &openAction},
-				dcl.Menu{
-					Text:  "New A",
-					Image: "../../gameresource/img/document-new.png",
-					Items: []dcl.MenuItem{
-						dcl.Action{
-							Text:        "A",
-							OnTriggered: mw.newActionTriggered,
-						},
-						dcl.Action{
-							Text:        "B",
-							OnTriggered: mw.newActionTriggered,
-						},
-						dcl.Action{
-							Text:        "C",
-							OnTriggered: mw.newActionTriggered,
-						},
-					},
-					OnTriggered: mw.newActionTriggered,
-				},
-				dcl.Separator{},
-				dcl.Menu{
-					Text:  "View",
-					Image: "../../gameresource/img/document-properties.png",
-					Items: []dcl.MenuItem{
-						dcl.Action{
-							Text:        "X",
-							OnTriggered: mw.changeViewActionTriggered,
-						},
-						dcl.Action{
-							Text:        "Y",
-							OnTriggered: mw.changeViewActionTriggered,
-						},
-						dcl.Action{
-							Text:        "Z",
-							OnTriggered: mw.changeViewActionTriggered,
-						},
-					},
-				},
-				dcl.Separator{},
-				dcl.Action{
-					Text:        "Special",
-					Image:       "../../gameresource/img/system-shutdown.png",
-					OnTriggered: mw.specialActionTriggered,
-				},
-			},
-		},
-
-		//ContextMenuItems: []dcl.MenuItem{
-		//	dcl.ActionRef{Action: &showAboutBoxAction},
-		//},
-		MinSize: dcl.Size{Width: 1200, Height: 900},
-		Layout:  dcl.VBox{},
-
-		Children: []dcl.Widget{
-			dcl.TabWidget{
-				Pages: []dcl.TabPage{
-					*mw.roleBakPage.Create(),
-					*mw.roleDbPage.Create(),
-				},
-			},
-		},
-	}.Create()); err != nil {
-		log.Fatal(err)
+	ret := mw.createWindow()
+	if !ret {
+		return
 	}
 
 	mw.setIcon("../../gameresource/img/sword1_classic.ico")
@@ -151,17 +45,6 @@ func main() {
 
 	mw.Closing().Attach(mw.closeEventHandler)
 	mw.Disposing().Attach(mw.disposingEventHandler)
-
-	addRecentFileActions := func(texts ...string) {
-		for _, text := range texts {
-			a := walk.NewAction()
-			a.SetText(text)
-			a.Triggered().Attach(mw.openActionTriggered)
-			recentMenu.Actions().Add(a)
-		}
-	}
-
-	addRecentFileActions("Foo", "Bar", "Baz")
 
 	mw.Run()
 }
@@ -301,4 +184,131 @@ func (mw *MyMainWindow) notifyIconExitActionHandler() {
 
 func (mw *MyMainWindow) notifyIconOpenActionHandler() {
 	mw.Show()
+}
+
+func (mw *MyMainWindow) createWindow() bool {
+	var openAction, showAboutBoxAction *walk.Action
+	var recentMenu *walk.Menu
+
+	_mw := &dcl.MainWindow{
+		AssignTo: &mw.MainWindow,
+		Title:    "角色存档信息查看工具",
+		MenuItems: []dcl.MenuItem{
+			dcl.Menu{
+				// &符号：Alt快捷键，快捷键即&后面字符
+				Text: "文件(&F)",
+				Items: []dcl.MenuItem{
+					dcl.Action{
+						AssignTo: &openAction,
+						Text:     "Open",
+						Image:    "../../gameresource/img/open.png",
+						// Shortcut字段：设置Action的快捷键
+						Shortcut:    dcl.Shortcut{Modifiers: walk.ModControl, Key: walk.KeyO},
+						OnTriggered: mw.openActionTriggered,
+					},
+					dcl.Menu{
+						AssignTo: &recentMenu,
+						Text:     "Recent",
+					},
+					dcl.Separator{},
+					dcl.Action{
+						Text:        "Exit",
+						OnTriggered: func() { mw.Close() },
+					},
+				},
+			},
+			dcl.Menu{
+				Text: "帮助(&H)",
+				Items: []dcl.MenuItem{
+					dcl.Action{
+						AssignTo:    &showAboutBoxAction,
+						Text:        "About",
+						OnTriggered: mw.showAboutBoxActionTriggered,
+					},
+				},
+			},
+		},
+
+		ToolBar: dcl.ToolBar{
+			ButtonStyle: dcl.ToolBarButtonImageBeforeText,
+			Items: []dcl.MenuItem{
+				//dcl.ActionRef{Action: &openAction},
+				dcl.Menu{
+					Text:  "New A",
+					Image: "../../gameresource/img/document-new.png",
+					Items: []dcl.MenuItem{
+						dcl.Action{
+							Text:        "A",
+							OnTriggered: mw.newActionTriggered,
+						},
+						dcl.Action{
+							Text:        "B",
+							OnTriggered: mw.newActionTriggered,
+						},
+						dcl.Action{
+							Text:        "C",
+							OnTriggered: mw.newActionTriggered,
+						},
+					},
+					OnTriggered: mw.newActionTriggered,
+				},
+				dcl.Separator{},
+				dcl.Menu{
+					Text:  "View",
+					Image: "../../gameresource/img/document-properties.png",
+					Items: []dcl.MenuItem{
+						dcl.Action{
+							Text:        "X",
+							OnTriggered: mw.changeViewActionTriggered,
+						},
+						dcl.Action{
+							Text:        "Y",
+							OnTriggered: mw.changeViewActionTriggered,
+						},
+						dcl.Action{
+							Text:        "Z",
+							OnTriggered: mw.changeViewActionTriggered,
+						},
+					},
+				},
+				dcl.Separator{},
+				dcl.Action{
+					Text:        "Special",
+					Image:       "../../gameresource/img/system-shutdown.png",
+					OnTriggered: mw.specialActionTriggered,
+				},
+			},
+		},
+
+		//ContextMenuItems: []dcl.MenuItem{
+		//	dcl.ActionRef{Action: &showAboutBoxAction},
+		//},
+		MinSize: dcl.Size{Width: 1200, Height: 900},
+		Layout:  dcl.VBox{},
+
+		Children: []dcl.Widget{
+			dcl.TabWidget{
+				Pages: []dcl.TabPage{
+					*mw.roleBakPage.Create(),
+					*mw.roleDbPage.Create(),
+				},
+			},
+		},
+	}
+
+	err := _mw.Create()
+	if err != nil {
+		return false
+	}
+
+	func(texts ...string) {
+		for _, text := range texts {
+			a := walk.NewAction()
+			a.SetText(text)
+			a.Triggered().Attach(mw.openActionTriggered)
+			recentMenu.Actions().Add(a)
+		}
+	}("Foo", "Bar", "Baz")
+
+	return true
 }
