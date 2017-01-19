@@ -21,15 +21,12 @@ var isSpecialMode = walk.NewMutableCondition()
 type MyMainWindow struct {
 	*walk.MainWindow
 	prevFilePath string
+
+	roleBakPage *RoleBakPage
+	roleDbPage  *RoleDbPage
 }
 
 var mw = new(MyMainWindow)
-var roleBakPage = new(RoleBakPage)
-var roleDbPage = new(RoleDbPage)
-var bakBindData = new(BakFileInfoBindData)
-var roleSkillDlg = new(RoleSkillDialog)
-var roleTaskDlg = new(RoleTaskDialog)
-var roleExtDataDlg = new(RoleExtDataDialog)
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -37,6 +34,9 @@ func main() {
 
 	var openAction, showAboutBoxAction *walk.Action
 	var recentMenu *walk.Menu
+
+	mw.roleBakPage = new(RoleBakPage)
+	mw.roleDbPage = new(RoleDbPage)
 
 	if err := (dcl.MainWindow{
 		AssignTo: &mw.MainWindow,
@@ -137,8 +137,8 @@ func main() {
 		Children: []dcl.Widget{
 			dcl.TabWidget{
 				Pages: []dcl.TabPage{
-					*roleBakPage.Create(),
-					*roleDbPage.Create(),
+					*mw.roleBakPage.Create(),
+					*mw.roleDbPage.Create(),
 				},
 			},
 		},

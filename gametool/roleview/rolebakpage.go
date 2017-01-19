@@ -41,6 +41,10 @@ type RoleBakPage struct {
 	bakFileCRC1            *walk.LineEdit
 	bakFileCRC2            *walk.LineEdit
 	encoder                *gameencoder.RoleBakEncoder
+	roleExtDataDlg         *RoleExtDataDialog
+	roleSkillDlg           *RoleSkillDialog
+	roleTaskDlg            *RoleTaskDialog
+	bakBindData            *BakFileInfoBindData
 	decodeProcessFinished  bool
 }
 
@@ -61,6 +65,12 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 	pg.encoder = gameencoder.NewRoleBakEncoder()
 	pg.encoder.SetLogger(pg.WriteLog)
 
+	pg.roleExtDataDlg = new(RoleExtDataDialog)
+	pg.roleSkillDlg = new(RoleSkillDialog)
+	pg.roleTaskDlg = new(RoleTaskDialog)
+
+	pg.bakBindData = new(BakFileInfoBindData)
+
 	var ep walk.ErrorPresenter
 	tab := &dcl.TabPage{
 		AssignTo: &pg.TabPage,
@@ -68,7 +78,7 @@ func (pg *RoleBakPage) Create() *dcl.TabPage {
 		Layout:   dcl.HBox{},
 		DataBinder: dcl.DataBinder{
 			AssignTo:   &pg.bakDataBinder,
-			DataSource: bakBindData,
+			DataSource: pg.bakBindData,
 			AutoSubmit: true,
 			//OnSubmitted: func() {
 			//	fmt.Println("OnSubmitted")
@@ -427,7 +437,7 @@ func (pg *RoleBakPage) onDecodeROleBakData() {
 
 	pg.decodeProcessFinished = false
 	pg.bakFileProcessLogText.SetText("")
-	go pg.BakDecodeRoutineFunction(bakBindData.BakFilePath)
+	go pg.BakDecodeRoutineFunction(pg.bakBindData.BakFilePath)
 }
 
 // WriteLog :
@@ -552,40 +562,40 @@ func (pg *RoleBakPage) restoreContentActionHandler() {
 }
 
 func (pg *RoleBakPage) onShowRoleSkillDialog() {
-	if !roleSkillDlg.CreateInstance(mw) {
+	if !pg.roleSkillDlg.CreateInstance(mw) {
 		return
 	}
 
 	if pg.encoder.FSkillData != nil {
-		roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
-		roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
+		pg.roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
+		pg.roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
 	}
 
-	roleSkillDlg.Run()
+	pg.roleSkillDlg.Run()
 }
 
 func (pg *RoleBakPage) onShowRoleTaskDialog() {
-	if !roleTaskDlg.CreateInstance(mw) {
+	if !pg.roleTaskDlg.CreateInstance(mw) {
 		return
 	}
 
 	if pg.encoder.TaskData != nil {
-		roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
+		pg.roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
 	}
 
-	roleTaskDlg.Run()
+	pg.roleTaskDlg.Run()
 }
 
 func (pg *RoleBakPage) onShowRoleExtDataDialog() {
-	if !roleExtDataDlg.CreateInstance(mw) {
+	if !pg.roleExtDataDlg.CreateInstance(mw) {
 		return
 	}
 
-	roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
-	roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
-	roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
-	roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
-	roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+	pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
+	pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
+	pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
+	pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
+	pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
 
-	roleExtDataDlg.Run()
+	pg.roleExtDataDlg.Run()
 }
