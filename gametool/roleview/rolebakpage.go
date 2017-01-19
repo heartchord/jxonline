@@ -160,7 +160,7 @@ func (pg *RoleBakPage) onCurrentTableViewKeyDown(key walk.Key) {
 	}
 }
 
-func (pg *RoleBakPage) onDecodeROleBakData() {
+func (pg *RoleBakPage) onDecodeRoleBakData() {
 	if !pg.decodeProcessFinished {
 		pg.WriteLog("Info - Last decode process hasn't finished, please wait...")
 		return
@@ -413,7 +413,7 @@ func (pg *RoleBakPage) createPage() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "解析",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 11, Bold: true},
-								OnClicked:  pg.onDecodeROleBakData,
+								OnClicked:  pg.onDecodeRoleBakData,
 							},
 							dcl.TextEdit{
 								AssignTo:   &pg.bakFileProcessLogText,

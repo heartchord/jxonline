@@ -46,6 +46,8 @@ func main() {
 	mw.Closing().Attach(mw.closeEventHandler)
 	mw.Disposing().Attach(mw.disposingEventHandler)
 
+	mw.roleDbPage.SetPageDefaultSettings()
+
 	mw.Run()
 }
 
