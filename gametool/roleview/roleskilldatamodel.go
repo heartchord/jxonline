@@ -9,21 +9,16 @@ import (
 
 // RoleSkillDataItem :
 type RoleSkillDataItem struct {
-	Index    int    // 索引
+	DataModelItemBase
 	SkillID  string // 数据名称
 	SkillLv  string // 数据内容
 	SkillExp string // 数据说明
-	checked  bool   // 是否选中
 }
 
 // RoleSkillDataModel :
 type RoleSkillDataModel struct {
-	walk.TableModelBase
-	walk.SorterBase
-	sortColumn int
-	sortOrder  walk.SortOrder
-	itemIcon   *walk.Icon
-	items      []*RoleSkillDataItem
+	DataModelBase
+	items []*RoleSkillDataItem
 }
 
 // NewRoleSkillDataModel :
@@ -146,15 +141,12 @@ func (m *RoleSkillDataModel) ResetRows(data []gamestruct.SkillData) {
 
 	for i := 0; i < dataCount; i++ {
 		fieldStrings := getStructFieldStrings(data[i])
-		for j := 0; j < len(fieldStrings); j++ {
-		}
 
-		m.items[i] = &RoleSkillDataItem{
-			Index:    i,
-			SkillID:  fieldStrings[0],
-			SkillLv:  fieldStrings[1],
-			SkillExp: fieldStrings[2],
-		}
+		m.items[i] = &RoleSkillDataItem{}
+		m.items[i].Index = i
+		m.items[i].SkillID = fieldStrings[0]
+		m.items[i].SkillLv = fieldStrings[1]
+		m.items[i].SkillExp = fieldStrings[2]
 	}
 
 	// Notify TableView and other interested parties about the reset.

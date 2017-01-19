@@ -9,20 +9,15 @@ import (
 
 // RoleTaskDataItem :
 type RoleTaskDataItem struct {
-	Index     int    // 索引
+	DataModelItemBase
 	TaskID    string // 数据名称
 	TaskValue string // 数据内容
-	checked   bool   // 是否选中
 }
 
 // RoleTaskDataModel :
 type RoleTaskDataModel struct {
-	walk.TableModelBase
-	walk.SorterBase
-	sortColumn int
-	sortOrder  walk.SortOrder
-	itemIcon   *walk.Icon
-	items      []*RoleTaskDataItem
+	DataModelBase
+	items []*RoleTaskDataItem
 }
 
 // NewRoleTaskDataModel :
@@ -139,14 +134,11 @@ func (m *RoleTaskDataModel) ResetRows(data []gamestruct.TaskData) {
 
 	for i := 0; i < dataCount; i++ {
 		fieldStrings := getStructFieldStrings(data[i])
-		for j := 0; j < len(fieldStrings); j++ {
-		}
 
-		m.items[i] = &RoleTaskDataItem{
-			Index:     i,
-			TaskID:    fieldStrings[0],
-			TaskValue: fieldStrings[1],
-		}
+		m.items[i] = &RoleTaskDataItem{}
+		m.items[i].Index = i
+		m.items[i].TaskID = fieldStrings[0]
+		m.items[i].TaskValue = fieldStrings[1]
 	}
 
 	// Notify TableView and other interested parties about the reset.

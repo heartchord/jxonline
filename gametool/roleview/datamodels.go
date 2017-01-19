@@ -11,24 +11,34 @@ import (
 	"github.com/lxn/walk"
 )
 
-// DataModelItem1 :
-type DataModelItem1 struct {
-	Index         int    // 索引
-	Name          string // 数据名称
-	Content       string // 数据内容
-	Comment       string // 数据说明
-	OriginContent string // 数据原始名称（数据内容可能改变）
-	checked       bool   // 是否选中
+// DataModelItemBase :
+type DataModelItemBase struct {
+	Index   int  // 索引
+	checked bool // 是否选中
 }
 
-// DataModel1 :
-type DataModel1 struct {
+// DataModelBase :
+type DataModelBase struct {
 	walk.TableModelBase
 	walk.SorterBase
 	sortColumn int
 	sortOrder  walk.SortOrder
 	itemIcon   *walk.Icon
-	items      []*DataModelItem1
+}
+
+// DataModelItem1 :
+type DataModelItem1 struct {
+	DataModelItemBase
+	Name          string // 数据名称
+	Content       string // 数据内容
+	Comment       string // 数据说明
+	OriginContent string // 数据原始名称（数据内容可能改变）
+}
+
+// DataModel1 :
+type DataModel1 struct {
+	DataModelBase
+	items []*DataModelItem1
 }
 
 // NewDataModel1 : 创建一个DataModel1对象
@@ -163,13 +173,12 @@ func (m *DataModel1) ResetRows(data interface{}) {
 	}
 
 	for i := 0; i < fieldCount; i++ {
-		m.items[i] = &DataModelItem1{
-			Index:         i,
-			Name:          fieldNames[i],
-			Content:       fieldStrings[i],
-			OriginContent: fieldStrings[i],
-			Comment:       fieldTags[i],
-		}
+		m.items[i] = &DataModelItem1{}
+		m.items[i].Index = i
+		m.items[i].Name = fieldNames[i]
+		m.items[i].Content = fieldStrings[i]
+		m.items[i].OriginContent = fieldStrings[i]
+		m.items[i].Comment = fieldTags[i]
 	}
 
 	// Notify TableView and other interested parties about the reset.
