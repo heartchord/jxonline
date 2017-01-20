@@ -322,11 +322,35 @@ func (pg *RoleBakPage) onShowRoleExtDataDialog() {
 		return
 	}
 
-	pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
-	pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
-	pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
-	pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
-	pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+	if pg.encoder.RoleExtData.HasBase {
+		pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
+	} else {
+		pg.roleExtDataDlg.LockSoulDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasBreak {
+		pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
+	} else {
+		pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasTransNimbus {
+		pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
+	} else {
+		pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasLingLongLock {
+		pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
+	} else {
+		pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasEquipCompose {
+		pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+	} else {
+		pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(nil)
+	}
 
 	pg.roleExtDataDlg.Run()
 }

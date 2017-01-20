@@ -546,6 +546,13 @@ func (en *RoleEncoder) decodeRoleExtData(data []byte, current *uint32) bool {
 	start := *current
 	end := *current
 
+	en.RoleExtData.HasBase = false
+	en.RoleExtData.HasLingLongLock = false
+	en.RoleExtData.HasHangerOn = false
+	en.RoleExtData.HasTransNimbus = false
+	en.RoleExtData.HasBreak = false
+	en.RoleExtData.HasEquipCompose = false
+
 	for start+headerSize <= dataLen {
 		// 解析gmstruct.DataHead
 		end = start + headerSize
@@ -587,6 +594,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfBase(data []byte, current *uint32) boo
 		return false
 	}
 
+	en.RoleExtData.HasBase = true
+
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.Base)
 	*current += structLen
@@ -603,6 +612,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfLingLongLock(data []byte, current *uin
 	if *current+structLen > dataLen {
 		return false
 	}
+
+	en.RoleExtData.HasLingLongLock = true
 
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.LingLongLock)
@@ -621,6 +632,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfHangerOn(data []byte, current *uint32)
 		return false
 	}
 
+	en.RoleExtData.HasHangerOn = true
+
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.HangerOn)
 	*current += structLen
@@ -637,6 +650,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfTransNimbus(data []byte, current *uint
 	if *current+structLen > dataLen {
 		return false
 	}
+
+	en.RoleExtData.HasTransNimbus = true
 
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.TransNimbus)
@@ -655,6 +670,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfBreak(data []byte, current *uint32) bo
 		return false
 	}
 
+	en.RoleExtData.HasBreak = true
+
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.Break)
 	*current += structLen
@@ -671,6 +688,8 @@ func (en *RoleEncoder) decodeRoleExtDataOfEquipCompose(data []byte, current *uin
 	if *current+structLen > dataLen {
 		return false
 	}
+
+	en.RoleExtData.HasEquipCompose = true
 
 	buf := bytes.NewBuffer(data[*current : *current+structLen])
 	binary.Read(buf, binary.LittleEndian, &en.RoleExtData.EquipCompose)

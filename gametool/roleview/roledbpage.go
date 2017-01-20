@@ -50,6 +50,10 @@ type RoleDbPage struct {
 	dbQueryAccountText      *walk.LineEdit
 	dbQueryLastModifiedText *walk.LineEdit
 	dbProcessLogText        *walk.TextEdit
+	roleExtDataDlg          *RoleExtDataDialog
+	roleSkillDlg            *RoleSkillDialog
+	roleTaskDlg             *RoleTaskDialog
+	encoder                 *gameencoder.RoleEncoder
 	decodeProcessFinished   bool
 }
 
@@ -59,6 +63,15 @@ func (pg *RoleDbPage) Create() *dcl.TabPage {
 	pg.roleBaseDataModel = NewDataModel1("../../gameresource/img/right-arrow2.ico")
 	pg.dbInfoBindData = new(DBInfoBindData)
 	pg.decodeProcessFinished = true
+
+	pg.roleExtDataDlg = new(RoleExtDataDialog)
+	pg.roleSkillDlg = new(RoleSkillDialog)
+	pg.roleTaskDlg = new(RoleTaskDialog)
+
+	pg.encoder = new(gameencoder.RoleEncoder)
+	pg.encoder.Init()
+	pg.encoder.SetLogger(pg.WriteLog)
+
 	return pg.createPage()
 }
 
@@ -90,7 +103,6 @@ func (pg *RoleDbPage) queryRoleDBDataRoutineFunction() {
 	}()
 
 	var data RoleDBData
-	var encoder gameencoder.RoleEncoder
 
 	mencoder := mahonia.NewEncoder("GBK")
 	mdecoder := mahonia.NewDecoder("GBK")
@@ -194,11 +206,72 @@ func (pg *RoleDbPage) queryRoleDBDataRoutineFunction() {
 	pg.dbQueryLastModifiedText.SetText(data.LastModified)
 
 	pg.WriteLog("开始解析角色数据")
-	encoder.Init()
-	encoder.SetLogger(pg.WriteLog)
-	encoder.Decode(data.RoleData)
+	pg.encoder.Decode(data.RoleData)
 
-	pg.roleBaseDataModel.ResetRows(encoder.RoleBaseData)
+	pg.roleBaseDataModel.ResetRows(pg.encoder.RoleBaseData)
+}
+
+func (pg *RoleDbPage) onShowRoleSkillDialog() {
+	if !pg.roleSkillDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.FSkillData != nil {
+		pg.roleSkillDlg.RoleFSkillDataModel.ResetRows(pg.encoder.FSkillData)
+		pg.roleSkillDlg.RoleLSkillDataModel.ResetRows(pg.encoder.LSkillData)
+	}
+
+	pg.roleSkillDlg.Run()
+}
+
+func (pg *RoleDbPage) onShowRoleTaskDialog() {
+	if !pg.roleTaskDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.TaskData != nil {
+		pg.roleTaskDlg.RoleTaskDataModel.ResetRows(pg.encoder.TaskData)
+	}
+
+	pg.roleTaskDlg.Run()
+}
+
+func (pg *RoleDbPage) onShowRoleExtDataDialog() {
+	if !pg.roleExtDataDlg.CreateInstance(mw) {
+		return
+	}
+
+	if pg.encoder.RoleExtData.HasBase {
+		pg.roleExtDataDlg.LockSoulDataModel.ResetRows(pg.encoder.RoleExtData.Base)
+	} else {
+		pg.roleExtDataDlg.LockSoulDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasBreak {
+		pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(pg.encoder.RoleExtData.Break)
+	} else {
+		pg.roleExtDataDlg.RoleBreakDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasTransNimbus {
+		pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(pg.encoder.RoleExtData.TransNimbus)
+	} else {
+		pg.roleExtDataDlg.TransNimbusDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasLingLongLock {
+		pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(pg.encoder.RoleExtData.LingLongLock)
+	} else {
+		pg.roleExtDataDlg.LingLongLockDataModel.ResetRows(nil)
+	}
+
+	if pg.encoder.RoleExtData.HasEquipCompose {
+		pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(pg.encoder.RoleExtData.EquipCompose)
+	} else {
+		pg.roleExtDataDlg.EquipComposeDataModel.ResetRows(nil)
+	}
+
+	pg.roleExtDataDlg.Run()
 }
 
 // WriteLog :
@@ -482,13 +555,13 @@ func (pg *RoleDbPage) createPage() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "角色技能",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onShowRoleSkillDialog,
+								OnClicked:  pg.onShowRoleSkillDialog,
 							},
 							dcl.PushButton{
 								ColumnSpan: 1,
 								Text:       "任务变量",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onShowRoleTaskDialog,
+								OnClicked:  pg.onShowRoleTaskDialog,
 							},
 							dcl.PushButton{
 								ColumnSpan: 1,
@@ -506,7 +579,7 @@ func (pg *RoleDbPage) createPage() *dcl.TabPage {
 								ColumnSpan: 1,
 								Text:       "扩展数据",
 								Font:       dcl.Font{Family: "微软雅黑", PointSize: 9, Bold: true},
-								//OnClicked:  pg.onShowRoleExtDataDialog,
+								OnClicked:  pg.onShowRoleExtDataDialog,
 							},
 						},
 					},

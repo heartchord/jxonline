@@ -397,12 +397,18 @@ type RoleExtDataOfEquipCompose struct {
 
 // RoleExtData :
 type RoleExtData struct {
-	Base         RoleExtDataOfBase
-	LingLongLock RoleExtDataOfLingLongLock
-	HangerOn     RoleExtDataOfHangerOn
-	TransNimbus  RoleExtDataOfTransNimbus
-	Break        RoleExtDataOfBreak
-	EquipCompose RoleExtDataOfEquipCompose
+	HasBase         bool
+	Base            RoleExtDataOfBase
+	HasLingLongLock bool
+	LingLongLock    RoleExtDataOfLingLongLock
+	HasHangerOn     bool
+	HangerOn        RoleExtDataOfHangerOn
+	HasTransNimbus  bool
+	TransNimbus     RoleExtDataOfTransNimbus
+	HasBreak        bool
+	Break           RoleExtDataOfBreak
+	HasEquipCompose bool
+	EquipCompose    RoleExtDataOfEquipCompose
 }
 
 func (r RoleExtData) PrintEquipComposeData() {

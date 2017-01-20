@@ -290,6 +290,7 @@ func (mw *MyMainWindow) createWindow() bool {
 
 		Children: []dcl.Widget{
 			dcl.TabWidget{
+				Font: dcl.Font{Family: "微软雅黑", PointSize: 12, Bold: true},
 				Pages: []dcl.TabPage{
 					*mw.roleBakPage.Create(),
 					*mw.roleDbPage.Create(),
